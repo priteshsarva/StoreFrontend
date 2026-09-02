@@ -1,0 +1,254 @@
+@import "tailwindcss";
+@plugin "flowbite-react/plugin/tailwindcss";
+@source "../.flowbite-react/class-list.json";
+
+@import "preline/variants.css";
+@source "../node_modules/preline/dist/*.js";
+
+/* Editorial luxury type system: Fraunces (optical serif display) for headlines,
+   Manrope for UI/body. Both variable, both Google-hosted. */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..600&family=Manrope:wght@300..700&display=swap');
+
+/* ==== Storefront design tokens — tenant-generic. Each vendor overrides
+   --store-primary (the accent) via <StoreContext> at runtime; everything else
+   is a fixed warm-neutral system that reads as "premium" regardless of accent. */
+@theme {
+  --font-sans: "Manrope", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: "Fraunces", ui-serif, Georgia, "Times New Roman", serif;
+
+  --color-ink: #1a1512;        /* warm near-black — never pure #000 */
+  --color-ink-soft: #4a4038;   /* secondary ink for body copy */
+  --color-paper: #faf8f5;      /* warm off-white page ground */
+  --color-panel: #f2ede5;      /* one step darker than paper — quiet section band */
+  --color-line: #e7e1d8;       /* hairline on paper */
+  --color-line-strong: #d8cfc1;/* stronger hairline for inputs/dividers */
+  --color-muted: #8a8175;      /* secondary text, warm gray */
+}
+
+:root {
+  --store-primary: #1a1512;
+  /* Warm-tinted elevation — shadows carry the paper's brown, never flat black.
+     A single consistent light source (top-down). */
+  --shadow-sm: 0 1px 2px rgba(46, 36, 25, 0.06), 0 1px 3px rgba(46, 36, 25, 0.05);
+  --shadow-md: 0 6px 16px -6px rgba(46, 36, 25, 0.14), 0 2px 6px -2px rgba(46, 36, 25, 0.08);
+  --shadow-lg: 0 24px 48px -18px rgba(46, 36, 25, 0.22), 0 8px 20px -12px rgba(46, 36, 25, 0.12);
+}
+
+html { scroll-behavior: smooth; }
+
+/* Mobile bottom tab bar height — content/footer clear it, the product page's
+   sticky action bar sits just above it. */
+:root { --mnav-h: 3.7rem; }
+@media (max-width: 767px) {
+  body { padding-bottom: calc(var(--mnav-h) + env(safe-area-inset-bottom)); }
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  background: var(--color-paper);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Barely-there paper grain — breaks the digital flatness the audit warns about.
+   Fixed, non-interactive, sits under everything. SVG fractal noise, very low
+   opacity so it reads as texture, never as pattern. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+}
+#root { position: relative; z-index: 1; }
+
+/* Headings default to the display serif — the single strongest cohesion lever.
+   Optical sizing + tight tracking gives every page an editorial, expensive feel.
+   Weight capped at 600 (the loaded max) so no synthetic "faux-bold" smearing. */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  letter-spacing: -0.015em;
+  font-weight: 480;
+}
+h1 { letter-spacing: -0.025em; }
+
+/* Prices, counts, any figure: the serif at a tabular setting reads as a
+   catalogue price, not a spreadsheet cell. */
+.num { font-variant-numeric: tabular-nums; }
+.price {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  font-optical-sizing: auto;
+  letter-spacing: -0.01em;
+}
+
+/* A thin, letter-spaced label used for eyebrows / category chips / small caps. */
+.eyebrow {
+  font-family: var(--font-sans);
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-muted);
+}
+
+/* Refined focus ring, accent-aware. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--store-primary);
+  outline-offset: 2px;
+}
+
+::selection { background: color-mix(in srgb, var(--store-primary) 18%, transparent); }
+
+/* Nav chrome takes the vendor's background palette colour; force its text/links
+   to the auto-contrast colour so labels stay readable on any brand colour.
+   (Count badges keep their own inline colours — inline style wins.) */
+.store-nav a, .store-nav button, .store-nav span, .store-nav .font-display {
+  color: var(--store-on-bg, #1a1512);
+}
+
+/* ============================================================================
+   Button system — one place, used across hero / PDP / banners / category so
+   every CTA on the site presses and hovers identically. Physical press feedback
+   (translateY + scale) on :active; GPU-accelerated (transform/opacity only). */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.9rem 2rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.18s ease, background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  will-change: transform;
+}
+.btn:active { transform: translateY(1px) scale(0.99); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn:disabled:active { transform: none; }
+
+.btn-primary {
+  background: var(--store-primary, #1a1512);
+  color: var(--store-on-primary, #fff); /* auto black/white for contrast */
+  box-shadow: var(--shadow-sm);
+}
+.btn-primary:hover:not(:disabled) { box-shadow: var(--shadow-md); opacity: 0.92; transform: translateY(-1px); }
+.btn-primary:active:not(:disabled) { transform: translateY(1px) scale(0.99); }
+
+.btn-outline {
+  background: transparent;
+  color: var(--color-ink);
+  border: 1px solid var(--color-ink);
+}
+.btn-outline:hover:not(:disabled) { background: var(--color-ink); color: var(--color-paper); }
+
+/* On dark/photo overlays: white surface, ink text, inverts on hover. */
+.btn-invert {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+.btn-invert:hover:not(:disabled) { background: transparent; color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.9); }
+
+/* A quiet text link with a growing underline — replaces ad-hoc "View all →". */
+.link-quiet {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--color-ink);
+  transition: gap 0.2s ease, color 0.2s ease;
+}
+.link-quiet:hover { gap: 0.65rem; color: var(--store-primary); }
+
+/* ============================================================================
+   Scroll reveal — driven by useScrollReveal() (IntersectionObserver), so it
+   works in every browser, not just Chromium's animation-timeline. Elements rise
+   + fade when they enter the viewport; `.stagger` grids cascade their children.
+   The hidden initial state is gated behind html.reveal-on (added by the JS), so
+   with no JS / reduced motion everything just shows. GPU-only (opacity+transform). */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes reveal-in {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  html.reveal-on .reveal {
+    opacity: 0;
+    transform: translateY(26px);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+  }
+  html.reveal-on .reveal.in-view { opacity: 1; transform: none; }
+
+  html.reveal-on .stagger > * {
+    opacity: 0;
+    transform: translateY(22px);
+    transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1), transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+  }
+  html.reveal-on .stagger.in-view > * { opacity: 1; transform: none; }
+  /* Cascade delay by child position — CSS-only, so it's robust to grids that
+     fill with async-loaded children after they scroll into view. */
+  html.reveal-on .stagger.in-view > *:nth-child(1)  { transition-delay: 0ms; }
+  html.reveal-on .stagger.in-view > *:nth-child(2)  { transition-delay: 45ms; }
+  html.reveal-on .stagger.in-view > *:nth-child(3)  { transition-delay: 90ms; }
+  html.reveal-on .stagger.in-view > *:nth-child(4)  { transition-delay: 135ms; }
+  html.reveal-on .stagger.in-view > *:nth-child(5)  { transition-delay: 180ms; }
+  html.reveal-on .stagger.in-view > *:nth-child(6)  { transition-delay: 225ms; }
+  html.reveal-on .stagger.in-view > *:nth-child(7)  { transition-delay: 270ms; }
+  html.reveal-on .stagger.in-view > *:nth-child(8)  { transition-delay: 315ms; }
+  html.reveal-on .stagger.in-view > *:nth-child(9)  { transition-delay: 360ms; }
+  html.reveal-on .stagger.in-view > *:nth-child(n+10) { transition-delay: 405ms; }
+}
+/* One-shot load cascade for above-the-fold rows (no scroll needed). Children
+   opt in with the .rise class + inline --i index. */
+@media (prefers-reduced-motion: no-preference) {
+  .rise {
+    opacity: 0;
+    animation: reveal-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation-delay: calc(var(--i, 0) * 55ms);
+  }
+}
+
+/* Dual-handle price slider: two <input type=range> overlaid on one track.
+   The inputs themselves are transparent and ignore pointer events except on
+   their thumbs, so both handles stay draggable. Round thumbs, accent border. */
+.pr-thumb {
+  position: absolute;
+  left: 0; right: 0;
+  width: 100%;
+  margin: 0;
+  background: transparent;
+  pointer-events: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.pr-thumb::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: auto;
+  height: 16px; width: 16px;
+  background: #fff;
+  border: 2px solid var(--store-primary, #1a1512);
+  border-radius: 9999px;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+.pr-thumb::-moz-range-thumb {
+  pointer-events: auto;
+  height: 16px; width: 16px;
+  background: #fff;
+  border: 2px solid var(--store-primary, #1a1512);
+  border-radius: 9999px;
+  cursor: pointer;
+}
+.pr-thumb::-webkit-slider-runnable-track { background: transparent; }
+.pr-thumb::-moz-range-track { background: transparent; }

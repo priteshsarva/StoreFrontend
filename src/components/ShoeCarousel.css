@@ -1,0 +1,30 @@
+/* Custom arrow styling */
+
+.slick-prev:before,
+.slick-next:before {
+  color: black !important;
+  font-size: 24px !important;
+}
+
+.slick-prev:hover:before,
+.slick-next:hover:before {
+  color: #666 !important;
+}
+
+/* Dots styling */
+.slick-dots li button:before {
+  color: black !important;
+}
+
+.slick-dots li.slick-active button:before {
+  color: #666 !important;
+}
+
+.slick-next {
+  right: -7px;
+}
+
+.slick-prev {
+  left: -7px;
+  z-index: 2;
+}

@@ -1,0 +1,26 @@
+.section-title {
+    align-items: center;
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: space-between;
+    position: relative;
+    width: 100%;
+}
+
+.section-title-center span {
+    margin: 0 15px;
+}
+
+.section-title b {
+    background-color: currentColor;
+    display: block;
+    flex: 1;
+    height: 2px;
+    opacity: .1;
+}
+
+b,
+strong {
+    font-weight: inherit;
+    font-weight: bolder;
+}

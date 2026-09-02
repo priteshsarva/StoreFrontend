@@ -1,0 +1,20 @@
+/* Arrow styling for react-slick — brand-agnostic, carried over from the
+   legacy ShoeCarousel.css since it's pure carousel chrome, not marketing content. */
+.slick-prev:before,
+.slick-next:before {
+  color: #1a1512 !important;
+  font-size: 24px !important;
+  opacity: 0.85;
+}
+.slick-prev:hover:before,
+.slick-next:hover:before {
+  color: #8a8175 !important;
+}
+.slick-next {
+  right: -8px;
+  z-index: 2;
+}
+.slick-prev {
+  left: -8px;
+  z-index: 2;
+}

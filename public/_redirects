@@ -1,0 +1,3 @@
+# SPA fallback for BrowserRouter — every path serves index.html, React Router
+# takes it from there. Works on Netlify and Cloudflare Pages (same file format).
+/*  /index.html  200

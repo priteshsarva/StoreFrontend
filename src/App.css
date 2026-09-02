@@ -1,0 +1,13 @@
+img-fluid {
+    max-width: 100%;
+    height: auto;
+}
+
+@keyframes fadeInOut {
+  0%, 100% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  10%, 90% { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.animate-fadeInOut {
+  animation: fadeInOut 2.5s ease forwards;
+}

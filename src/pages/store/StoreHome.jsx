@@ -8,6 +8,7 @@ import SectionRenderer from "../../components/sections/registry";
 import WhatsAppPromoBar from "../../components/store/WhatsAppPromoBar";
 import OriginalHome from "./OriginalHome";
 import VelocityHome from "./VelocityHome";
+import AtelierHome from "./AtelierHome";
 
 export default function StoreHome() {
   const { config } = useStore();
@@ -21,6 +22,7 @@ export default function StoreHome() {
   // hand-built full-page templates selected by preset id (no section list)
   if (preset === "velocity") return <VelocityHome variant="velocity" />;
   if (preset === "chrono") return <VelocityHome variant="chrono" />;
+  if (preset === "atelier") return <AtelierHome />;
   if (preset === "original") return <OriginalHome />;
 
   // vendor explicitly configured a custom section layout → render that

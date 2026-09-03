@@ -9,27 +9,34 @@ const BASE = import.meta.env.VITE_BASE_URL;
 // drops the query param under BrowserRouter) or a hard refresh keeps the
 // tenant across the same tab.
 const SESSION_KEY = "spp_resolved_slug";
+const cacheGet = () => { try { return localStorage.getItem(SESSION_KEY) || ""; } catch { return ""; } };
+const cacheSet = (s) => { try { localStorage.setItem(SESSION_KEY, s); } catch { /* private mode */ } };
+
+// Hosts where the tenant is carried by ?store=<slug>, NOT by a per-store
+// subdomain: local dev, and shared preview hosts (Netlify/Vercel/CF Pages temp
+// domains) where every store shares one hostname. On a real per-store domain the
+// subdomain IS the store, so this is false and we read the subdomain instead.
+export function isQueryTenantHost(host) {
+  const h = String(host ?? (typeof window !== "undefined" ? window.location.hostname : "")).toLowerCase();
+  return h === "localhost" || h === "127.0.0.1" || /^\d+\.\d+\.\d+\.\d+$/.test(h)
+    || /\.netlify\.app$/.test(h) || /\.vercel\.app$/.test(h) || /\.pages\.dev$/.test(h);
+}
 
 export function resolveSlug() {
   const fromQuery = new URLSearchParams(window.location.search).get("store");
-  if (fromQuery) {
-    try { sessionStorage.setItem(SESSION_KEY, fromQuery.toLowerCase()); } catch { /* private mode */ }
-    return fromQuery.toLowerCase();
+  if (fromQuery) { const s = fromQuery.toLowerCase(); cacheSet(s); return s; }
+
+  // Shared/preview host (or dev): the ?store= param may have been dropped by an
+  // internal navigation or a hard refresh, so fall back to the cached slug
+  // (persisted in localStorage → survives refresh AND new tabs), then the dev
+  // default. withStore() keeps the param on links so this is only a safety net.
+  if (isQueryTenantHost()) {
+    return (cacheGet() || import.meta.env.VITE_DEV_STORE || "").toLowerCase();
   }
 
-  const host = window.location.hostname;
-  const isLocalHost = host === "localhost" || host === "127.0.0.1" || /^\d+\.\d+\.\d+\.\d+$/.test(host);
-  if (isLocalHost) {
-    // dev order: cached slug from this session → VITE_DEV_STORE fallback
-    let cached = "";
-    try { cached = sessionStorage.getItem(SESSION_KEY) || ""; } catch { /* ignore */ }
-    return (cached || import.meta.env.VITE_DEV_STORE || "").toLowerCase();
-  }
-
-  // production: subdomain, cached to survive client-side navigations that drop
-  // the URL context (they usually don't in prod, but the cache costs nothing).
-  const sub = host.split(".")[0].toLowerCase();
-  try { sessionStorage.setItem(SESSION_KEY, sub); } catch { /* ignore */ }
+  // real per-store domain: the subdomain is the store.
+  const sub = window.location.hostname.split(".")[0].toLowerCase();
+  cacheSet(sub);
   return sub;
 }
 

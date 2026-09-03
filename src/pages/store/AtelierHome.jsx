@@ -4,8 +4,9 @@
 // price and link comes from the vendor's own config + products, so it works for
 // any store. Deliberately overrides the store's brand palette within its own
 // scope — the look is intentionally black-and-white editorial.
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useStore } from "../../context/StoreContext";
 import ReviewsSlider from "../../components/store/ReviewsSlider";
 import { withStore } from "../../lib/tenant";
@@ -37,7 +38,8 @@ function CircularText({ text }) {
   return (
     <svg viewBox="0 0 200 200" className="a-spin w-[128px] h-[128px]" aria-hidden="true">
       <defs><path id="a-circle" d="M100,100 m-74,0 a74,74 0 1,1 148,0 a74,74 0 1,1 -148,0" /></defs>
-      <text style={{ fontSize: 12.5, letterSpacing: 2, fill: "#000", textTransform: "uppercase", fontWeight: 500 }}>
+      {/* white halo (stroke painted under the fill) keeps it readable on photos */}
+      <text style={{ fontSize: 12.5, letterSpacing: 2, fill: "#000", stroke: "#fff", strokeWidth: 2.6, paintOrder: "stroke", textTransform: "uppercase", fontWeight: 600 }}>
         <textPath href="#a-circle">{t}</textPath>
       </text>
     </svg>
@@ -63,16 +65,27 @@ export default function AtelierHome() {
 
   const hero = config?.hero || {};
   const storeName = config?.store_name || "";
+  const shopAll = withStore("/c/all");
+  const pdp = (p) => withStore(`/p/${p.dbName}/${p.productId}`);
+
+  // Each full-bleed banner sits on a real product's photo — so it links straight
+  // to that product ("Buy this now"). The hero is the exception when the vendor
+  // set their OWN campaign image (then it's not a product, so it shops the store).
+  const heroProduct = hero.image_url ? null : pool[0];
   const heroImg = hero.image_url || pool[0]?.thumbnail;
   const heroTitle = hero.title || "Timeless style for modern lives";
-  const shopAll = withStore("/c/all");
+  const editorialProduct = pool[4] || pool[0];
+  const editorialImg = editorialProduct?.thumbnail || heroImg;
+  const bannerProduct = pool[5] || pool[1] || pool[0];
+  const bannerImg = bannerProduct?.thumbnail || heroImg;
 
   const bestsellers = pool.slice(0, 12);
-  const collage = pool.slice(0, 4);
+  const collage = pool.slice(0, 5);
   const arrivals = pool.slice(0, 15);
-  const editorialImg = pool[4]?.thumbnail || heroImg;
-  const bannerImg = pool[5]?.thumbnail || heroImg;
-  const circleImg = pool[6]?.thumbnail || pool[1]?.thumbnail;
+
+  // Best-seller rail: arrow controls that actually slide the row.
+  const railRef = useRef(null);
+  const slide = (dir) => { const el = railRef.current; if (el) el.scrollBy({ left: dir * Math.round(el.clientWidth * 0.85), behavior: "smooth" }); };
 
   const review = (Array.isArray(config?.reviews) && config.reviews.length)
     ? null // if the vendor added review images, show the image slider instead of the canned quote
@@ -92,26 +105,38 @@ export default function AtelierHome() {
         <div className="relative z-10 flex flex-col justify-end min-h-[88vh] px-6 md:px-14 pb-14 md:pb-20 max-w-[1440px] mx-auto">
           <h1 className="a-display text-white uppercase leading-[0.95] text-[40px] md:text-[76px] max-w-[16ch]">{heroTitle}</h1>
           {hero.subtitle && <p className="text-white/85 mt-4 max-w-[42ch] text-sm md:text-base">{hero.subtitle}</p>}
-          <Link to={shopAll} className="a-btn mt-8">Shop all products</Link>
+          <div className="mt-8 flex items-center gap-5">
+            {heroProduct
+              ? <Link to={pdp(heroProduct)} {...newTab} className="a-btn">Buy this now</Link>
+              : <Link to={shopAll} className="a-btn">Shop all products</Link>}
+            {heroProduct && <Link to={shopAll} className="text-[11px] uppercase tracking-[0.16em] text-white border-b border-white/70 pb-0.5 hover:opacity-70 transition-opacity">Shop all</Link>}
+          </div>
         </div>
       </section>
 
-      {/* ---------------- CATEGORY CARDS ---------------- */}
-      {catCards.length > 0 && (
-        <section className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-[2px] bg-white">
-          {catCards.map((g) => {
-            const img = g.items.find((i) => i.thumbnail)?.thumbnail;
-            return (
-              <Link key={g.cat} to={withStore(`/c/${encodeURIComponent(g.cat)}`)} className="group relative block overflow-hidden" style={{ aspectRatio: "3/4.2", background: "#f4f2ee" }}>
-                {img && <img src={img} alt={g.cat} className="absolute inset-0 w-full h-full object-cover transition duration-[900ms] ease-out group-hover:scale-[1.04]" />}
-                <div className="absolute inset-x-0 bottom-0 flex justify-center pb-7">
-                  <span className="a-btn">Shop {cap(g.cat)}</span>
-                </div>
-              </Link>
-            );
-          })}
-        </section>
-      )}
+      {/* ---------------- CATEGORY CARDS ----------------
+          Columns follow the category count so a single-category store gets one
+          full-width landscape banner instead of one skinny card + empty gaps. */}
+      {catCards.length > 0 && (() => {
+        const n = Math.min(catCards.length, 3);
+        const solo = n === 1;
+        return (
+          <section className="grid gap-[2px] bg-white" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
+            {catCards.slice(0, 3).map((g) => {
+              const img = g.items.find((i) => i.thumbnail)?.thumbnail;
+              return (
+                <Link key={g.cat} to={withStore(`/c/${encodeURIComponent(g.cat)}`)} className="group relative block overflow-hidden" style={{ aspectRatio: solo ? "21/9" : "3/4.2", background: "#f4f2ee" }}>
+                  {img && <img src={img} alt={g.cat} className="absolute inset-0 w-full h-full object-cover transition duration-[900ms] ease-out group-hover:scale-[1.04]" />}
+                  <div className="absolute inset-0" style={{ background: solo ? "linear-gradient(to top, rgba(0,0,0,0.3), transparent 55%)" : "transparent" }} />
+                  <div className={`absolute inset-x-0 bottom-0 flex ${solo ? "justify-start px-6 md:px-14" : "justify-center"} pb-7`}>
+                    <span className="a-btn">Shop {cap(g.cat)}</span>
+                  </div>
+                </Link>
+              );
+            })}
+          </section>
+        );
+      })()}
 
       {/* ---------------- BEST SELLER ---------------- */}
       {bestsellers.length > 0 && (
@@ -121,11 +146,15 @@ export default function AtelierHome() {
               <h2 className="a-display uppercase text-[22px] md:text-[34px] leading-none">Best Seller</h2>
               <div className="text-[11px] uppercase tracking-[0.18em] text-[#6f6f6f] mt-2">Top picks{cats[0] ? ` · ${cap(cats[0])}` : ""}</div>
             </div>
-            <Link to={shopAll} className="text-[11px] uppercase tracking-[0.14em] border-b border-black pb-0.5 hover:opacity-60 transition-opacity">View all</Link>
+            <div className="flex items-center gap-3">
+              <button onClick={() => slide(-1)} aria-label="Previous" className="w-9 h-9 border border-[#e6e6e6] flex items-center justify-center hover:bg-black hover:text-white transition-colors"><ArrowLeft size={16} /></button>
+              <button onClick={() => slide(1)} aria-label="Next" className="w-9 h-9 border border-[#e6e6e6] flex items-center justify-center hover:bg-black hover:text-white transition-colors"><ArrowRight size={16} /></button>
+              <Link to={shopAll} className="hidden sm:inline-block text-[11px] uppercase tracking-[0.14em] border-b border-black pb-0.5 hover:opacity-60 transition-opacity ml-2">View all</Link>
+            </div>
           </div>
-          <div className="flex gap-5 md:gap-7 overflow-x-auto a-scroll pb-3 -mx-6 px-6 md:mx-0 md:px-0">
+          <div ref={railRef} className="flex gap-5 md:gap-7 overflow-x-auto a-scroll pb-3 -mx-6 px-6 md:mx-0 md:px-0" style={{ scrollSnapType: "x mandatory" }}>
             {bestsellers.map((p) => (
-              <div key={`${p.dbName}-${p.productId}`} className="flex-none w-[62vw] sm:w-[38vw] md:w-[300px]"><Tile p={p} /></div>
+              <div key={`${p.dbName}-${p.productId}`} className="flex-none w-[62vw] sm:w-[38vw] md:w-[300px]" style={{ scrollSnapAlign: "start" }}><Tile p={p} /></div>
             ))}
           </div>
         </section>
@@ -138,31 +167,41 @@ export default function AtelierHome() {
           <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.35), transparent 55%)" }} />
           <div className="relative z-10 h-full flex flex-col justify-center px-6 md:px-14 max-w-[1440px] mx-auto">
             <h2 className="a-display uppercase text-white leading-[0.98] text-[30px] md:text-[54px] max-w-[14ch]">Minimalist designs crafted for you</h2>
-            <Link to={shopAll} className="text-[11px] uppercase tracking-[0.16em] text-white border-b border-white pb-0.5 mt-6 w-fit hover:opacity-70 transition-opacity">Discover</Link>
+            <div className="mt-6 flex items-center gap-5">
+              {editorialProduct && <Link to={pdp(editorialProduct)} {...newTab} className="a-btn">Buy this now</Link>}
+              <Link to={shopAll} className="text-[11px] uppercase tracking-[0.16em] text-white border-b border-white pb-0.5 hover:opacity-70 transition-opacity">Discover</Link>
+            </div>
           </div>
         </section>
       )}
 
       {/* ---------------- ASYMMETRIC COLLAGE ---------------- */}
       {collage.length >= 4 && (
-        <section className="max-w-[1440px] mx-auto px-6 md:px-14 pt-[70px] md:pt-[120px]">
+        <section className="relative max-w-[1440px] mx-auto px-6 md:px-14 pt-[70px] md:pt-[120px] overflow-visible">
+          {/* circular text — deliberately OFFSET to the top-right and allowed to
+              bleed off the page edge, so it reads as an editorial mark rather than
+              a label pinned to the middle of a product. */}
+          <div className="pointer-events-none absolute z-30 top-[46px] right-[-26px] md:top-[92px] md:right-[-46px]">
+            <CircularText text="Light layers for everyday" />
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-12 gap-3 md:gap-5">
-            <Link to={withStore(`/p/${collage[0].dbName}/${collage[0].productId}`)} {...newTab} className="md:col-span-7 group block overflow-hidden" style={{ aspectRatio: "4/5" }}>
+            <Link to={pdp(collage[0])} {...newTab} className="md:col-span-7 group block overflow-hidden" style={{ aspectRatio: "4/5" }}>
               <img src={collage[0].thumbnail} alt="" className="w-full h-full object-cover transition duration-[900ms] group-hover:scale-[1.03]" />
             </Link>
             <div className="md:col-span-5 flex flex-col gap-3 md:gap-5">
-              <Link to={withStore(`/p/${collage[1].dbName}/${collage[1].productId}`)} {...newTab} className="group block overflow-hidden flex-1" style={{ aspectRatio: "3/2" }}>
+              <Link to={pdp(collage[1])} {...newTab} className="group block overflow-hidden flex-1" style={{ aspectRatio: "3/2" }}>
                 <img src={collage[1].thumbnail} alt="" className="w-full h-full object-cover transition duration-[900ms] group-hover:scale-[1.03]" />
               </Link>
-              <div className="relative flex-1 flex items-center justify-center bg-[#f4f2ee] min-h-[180px]">
-                {circleImg && <img src={circleImg} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90" />}
-                <div className="relative z-10"><CircularText text="Light layers for everyday" /></div>
-              </div>
+              {collage[4]
+                ? <Link to={pdp(collage[4])} {...newTab} className="group block overflow-hidden flex-1" style={{ aspectRatio: "3/2" }}>
+                    <img src={collage[4].thumbnail} alt="" className="w-full h-full object-cover transition duration-[900ms] group-hover:scale-[1.03]" />
+                  </Link>
+                : <div className="flex-1 bg-[#f4f2ee] min-h-[160px]" />}
             </div>
-            <Link to={withStore(`/p/${collage[2].dbName}/${collage[2].productId}`)} {...newTab} className="md:col-span-5 group block overflow-hidden" style={{ aspectRatio: "4/5" }}>
+            <Link to={pdp(collage[2])} {...newTab} className="md:col-span-5 group block overflow-hidden" style={{ aspectRatio: "4/5" }}>
               <img src={collage[2].thumbnail} alt="" className="w-full h-full object-cover transition duration-[900ms] group-hover:scale-[1.03]" />
             </Link>
-            <Link to={withStore(`/p/${collage[3].dbName}/${collage[3].productId}`)} {...newTab} className="md:col-span-7 group block overflow-hidden" style={{ aspectRatio: "16/10" }}>
+            <Link to={pdp(collage[3])} {...newTab} className="md:col-span-7 group block overflow-hidden" style={{ aspectRatio: "16/10" }}>
               <img src={collage[3].thumbnail} alt="" className="w-full h-full object-cover transition duration-[900ms] group-hover:scale-[1.03]" />
             </Link>
           </div>
@@ -189,7 +228,10 @@ export default function AtelierHome() {
           <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.4), transparent 60%)" }} />
           <div className="relative z-10 h-full flex flex-col justify-end px-6 md:px-14 pb-14 md:pb-20 max-w-[1440px] mx-auto">
             <h2 className="a-display uppercase text-white leading-[0.95] text-[32px] md:text-[60px] max-w-[12ch]">The art of everyday elegance</h2>
-            <Link to={shopAll} className="text-[11px] uppercase tracking-[0.16em] text-white border-b border-white pb-0.5 mt-6 w-fit hover:opacity-70 transition-opacity">Read the story</Link>
+            <div className="mt-6 flex items-center gap-5">
+              {bannerProduct && <Link to={pdp(bannerProduct)} {...newTab} className="a-btn">Buy this now</Link>}
+              <Link to={shopAll} className="text-[11px] uppercase tracking-[0.16em] text-white border-b border-white pb-0.5 hover:opacity-70 transition-opacity">Read the story</Link>
+            </div>
           </div>
         </section>
       )}

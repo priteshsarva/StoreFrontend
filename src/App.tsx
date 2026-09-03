@@ -2,7 +2,7 @@ import './App.css'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { StoreProvider, useStore } from './context/StoreContext.jsx';
 import { CartProvider } from './context/CartContext.jsx';
@@ -58,6 +58,22 @@ function AppShell() {
   useShareableTenantUrl(slug);
   useScrollReveal();
 
+  // "Reveal footer": the footer is pinned behind the page; the content sits on
+  // top with a solid background and a bottom margin equal to the footer's height,
+  // so scrolling the last stretch slides the content up off the fixed footer.
+  const footerRef = useRef<HTMLDivElement>(null);
+  const [footerH, setFooterH] = useState(0);
+  useEffect(() => {
+    const el = footerRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const update = () => setFooterH(el.offsetHeight);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    window.addEventListener('resize', update);
+    return () => { ro.disconnect(); window.removeEventListener('resize', update); };
+  }, [status, config?.preset]);
+
   // Tab title + favicon from the vendor's branding (favicon_url, else the logo).
   useEffect(() => {
     if (config?.store_name) document.title = config.store_name;
@@ -86,22 +102,30 @@ function AppShell() {
     <CartProvider>
       <WishlistProvider>
         <CustomerAuthProvider>
-          <StoreNavBar />
           <ScrollToTop />
-          <Routes>
-            <Route path="/" element={<StoreHome />} />
-            <Route path="/c/:category" element={<StoreCategoryPage />} />
-            <Route path="/search" element={<StoreCategoryPage />} />
-            <Route path="/p/:dbName/:id" element={<StoreProductPage />} />
-            <Route path="/cart" element={<CartPage />} />
-            <Route path="/wishlist" element={<WishlistPage />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/account" element={<AccountPage />} />
-            <Route path="/policy/:kind" element={<PolicyPage />} />
-            <Route path="/faq" element={<FaqPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-          <StoreFooter />
+          {/* content sits ON TOP of the fixed footer; its solid background hides
+              the footer until the page is scrolled to the very bottom */}
+          <div style={{ position: 'relative', zIndex: 1, background: 'var(--color-paper, #ffffff)', marginBottom: footerH }}>
+            <StoreNavBar />
+            <Routes>
+              <Route path="/" element={<StoreHome />} />
+              <Route path="/c/:category" element={<StoreCategoryPage />} />
+              <Route path="/search" element={<StoreCategoryPage />} />
+              <Route path="/p/:dbName/:id" element={<StoreProductPage />} />
+              <Route path="/cart" element={<CartPage />} />
+              <Route path="/wishlist" element={<WishlistPage />} />
+              <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/account" element={<AccountPage />} />
+              <Route path="/policy/:kind" element={<PolicyPage />} />
+              <Route path="/faq" element={<FaqPage />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </div>
+          {/* fixed, behind everything — revealed as the content slides up. Extra
+              bottom padding on mobile so its last line clears the bottom nav. */}
+          <div ref={footerRef} className="pb-[64px] md:pb-0" style={{ position: 'fixed', left: 0, right: 0, bottom: 0, zIndex: 0 }}>
+            <StoreFooter />
+          </div>
           <MobileBottomNav />
         </CustomerAuthProvider>
       </WishlistProvider>

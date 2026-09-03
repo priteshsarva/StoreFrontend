@@ -8,11 +8,13 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useStore } from "../../context/StoreContext";
 import { withStore } from "../../lib/tenant";
+import { useAutoRefresh } from "../../lib/useAutoRefresh";
 
 const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : "");
 
 export default function CategoriesSection({ categories, thumbnail_from = "first_product" }) {
   const { api, config } = useStore();
+  const refresh = useAutoRefresh();
   // Honor the vendor's nav curation (label + thumbnail + order) when set; else
   // fall back to the store's categories. config.categories is already ordered
   // by the vendor's nav, so tiles follow the vendor's priority automatically.
@@ -29,7 +31,7 @@ export default function CategoriesSection({ categories, thumbnail_from = "first_
     if (thumbnail_from !== "first_product" || !cats.length) return;
     Promise.all(cats.map((c) => api.products({ category: c, limit: 1 }).catch(() => ({ results: [] }))))
       .then((rs) => setThumbs(Object.fromEntries(cats.map((c, i) => [c, rs[i].results[0]?.thumbnail]))));
-  }, [cats.join("|")]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [cats.join("|"), refresh]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!items.length) return null;
   const cols = items.length === 1 ? "grid-cols-1" : items.length === 2 ? "grid-cols-2" : items.length === 3 ? "grid-cols-3" : "grid-cols-2 md:grid-cols-4";

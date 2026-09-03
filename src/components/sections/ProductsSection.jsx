@@ -10,11 +10,13 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { useStore } from "../../context/StoreContext";
 import { withStore } from "../../lib/tenant";
+import { useAutoRefresh } from "../../lib/useAutoRefresh";
 import ProductRail from "../store/ProductRail";
 import ProductCard from "../store/ProductCard";
 
 export default function ProductsSection({ category, limit = 8, style = "rail", view_all = true }) {
   const { api, config } = useStore();
+  const refresh = useAutoRefresh();
   const [products, setProducts] = useState(null);
   const [resolvedCat, setResolvedCat] = useState(null); // the category the shown products actually came from
 
@@ -38,7 +40,7 @@ export default function ProductsSection({ category, limit = 8, style = "rail", v
       else { setProducts(lists[i]); setResolvedCat(cats[i]); }
     });
     return () => { alive = false; };
-  }, [cats.join("|"), limit]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [cats.join("|"), limit, refresh]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (products === null) return <div className="text-center text-muted py-8 text-sm">Loading…</div>;
   if (!products.length) return null;

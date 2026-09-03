@@ -6,6 +6,7 @@ import { useParams, useSearchParams, Link } from "react-router-dom";
 import { SlidersHorizontal, X, ChevronDown } from "lucide-react";
 import { useStore } from "../../context/StoreContext";
 import { withStore } from "../../lib/tenant";
+import { useAutoRefresh } from "../../lib/useAutoRefresh";
 import ProductCard from "../../components/store/ProductCard";
 import PriceRange from "../../components/store/PriceRange";
 
@@ -45,6 +46,9 @@ export default function StoreCategoryPage() {
   // No category in the URL (the /search route) → search across ALL categories.
   const listCategory = category || "all";
   const isAll = listCategory === "all";
+  // Re-pull on tab focus/visibility so values stay fresh; no periodic tick here
+  // (0) — a reset mid-scroll on a long paginated list would be jarring.
+  const refresh = useAutoRefresh(0);
 
   // facets re-fetch when the category OR the sub-category changes — brands (with
   // their nested sub-brands) narrow to the picked sub-category.
@@ -52,7 +56,7 @@ export default function StoreCategoryPage() {
     api.facets({ category: listCategory, ...(subcat && { cat: subcat }) })
       .then(setFacets)
       .catch(() => setFacets({ price_min: 0, price_max: 0, brands: [], subcategories: [], sizes: [] }));
-  }, [listCategory, subcat]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [listCategory, subcat, refresh]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const queryParams = useMemo(() => ({
     category: listCategory,
@@ -67,13 +71,13 @@ export default function StoreCategoryPage() {
     ...(priceMax && { price_max: priceMax }),
   }), [listCategory, q, subcat, sort, stock, brandsSel, subSel, sizesSel, priceMin, priceMax]);
 
-  // reload from page 1 whenever any filter changes
+  // reload from page 1 whenever any filter changes (or on focus/visibility refresh)
   useEffect(() => {
     setLoading(true); setPage(1);
     api.products({ ...queryParams, page: 1, limit: 12 })
       .then((r) => { setProducts(r.results); setHasMore(r.hasMore); })
       .finally(() => setLoading(false));
-  }, [JSON.stringify(queryParams)]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(queryParams), refresh]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function loadMore() {
     const next = page + 1;

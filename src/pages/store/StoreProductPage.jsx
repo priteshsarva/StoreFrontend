@@ -6,6 +6,7 @@ import { useCart } from "../../context/CartContext";
 import { inr } from "../../lib/money";
 import { useWishlist } from "../../context/WishlistContext";
 import { withStore } from "../../lib/tenant";
+import { useAutoRefresh } from "../../lib/useAutoRefresh";
 import ProductRail from "../../components/store/ProductRail";
 import SectionHeading from "../../components/store/SectionHeading";
 
@@ -14,6 +15,7 @@ export default function StoreProductPage() {
   const { api, config } = useStore();
   const { add } = useCart();
   const navigate = useNavigate();
+  const refresh = useAutoRefresh();
 
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
@@ -44,6 +46,15 @@ export default function StoreProductPage() {
       .catch(() => {});
     return () => { cancelled = true; };
   }, [dbName, id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // On tab focus/visibility, re-read the product for fresh price/stock/images —
+  // a plain read (no scrape re-trigger, unlike the on-mount effect above).
+  useEffect(() => {
+    if (!refresh) return; // skip the initial render; the mount effect handles that
+    let cancelled = false;
+    api.product(dbName, id).then((d) => { if (!cancelled) setData(d); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [refresh]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (error) return <div className="max-w-screen-xl mx-auto px-4 py-24 text-center text-muted">Product not found.</div>;
   if (!data) return <ProductSkeleton />;

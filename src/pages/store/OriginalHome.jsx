@@ -13,6 +13,7 @@ import ProductCard from "../../components/store/ProductCard";
 import ReviewsSlider from "../../components/store/ReviewsSlider";
 import { withStore } from "../../lib/tenant";
 import { watchBrandImg } from "../../lib/watchBrandImg";
+import { useAutoRefresh } from "../../lib/useAutoRefresh";
 
 const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : "");
 
@@ -34,19 +35,20 @@ export default function OriginalHome() {
   const [byCat, setByCat] = useState(null); // { [category]: product[] }
   const [allProducts, setAllProducts] = useState(null); // mixed rail across every category
   const multiCat = categories.length > 1;
+  const refresh = useAutoRefresh();
 
   useEffect(() => {
     if (!categories.length) { setByCat({}); return; }
     // one in-stock fetch per category; feeds both the carousel and the grid
     Promise.all(categories.map((c) => api.products({ category: c, limit: 16 }).catch(() => ({ results: [] }))))
       .then((rs) => setByCat(Object.fromEntries(categories.map((c, i) => [c, rs[i].results]))));
-  }, [categories.join("|")]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [categories.join("|"), refresh]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     // a mixed "All products" rail — only meaningful when the store sells >1 category
     if (!multiCat) { setAllProducts([]); return; }
     api.products({ category: "all", limit: 14 }).then((r) => setAllProducts(r.results || [])).catch(() => setAllProducts([]));
-  }, [multiCat]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [multiCat, refresh]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>

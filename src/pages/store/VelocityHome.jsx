@@ -12,6 +12,7 @@ import WhatsAppPromoBar from "../../components/store/WhatsAppPromoBar";
 import ProductCard from "../../components/store/ProductCard";
 import ReviewsSlider from "../../components/store/ReviewsSlider";
 import { withStore } from "../../lib/tenant";
+import { useAutoRefresh } from "../../lib/useAutoRefresh";
 
 const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : "");
 const isShoeCat = (c) => /shoe|footwear|sneaker|trainer/i.test(c || "");
@@ -69,11 +70,12 @@ export default function VelocityHome({ variant = "velocity" }) {
 
   const [products, setProducts] = useState(null); // shoe products
   const [gender, setGender] = useState("all");     // all | men | women
+  const refresh = useAutoRefresh();
 
   useEffect(() => {
     if (!shoeCat) { setProducts([]); return; }
     api.products({ category: shoeCat, limit: 24 }).then((r) => setProducts(r.results || [])).catch(() => setProducts([]));
-  }, [shoeCat]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [shoeCat, refresh]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const list = products || [];
   const withImg = list.filter((p) => p.thumbnail);

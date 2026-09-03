@@ -11,6 +11,7 @@ import { useStore } from "../../context/StoreContext";
 import ReviewsSlider from "../../components/store/ReviewsSlider";
 import { withStore } from "../../lib/tenant";
 import { inr } from "../../lib/money";
+import { useAutoRefresh } from "../../lib/useAutoRefresh";
 
 const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : "");
 const newTab = { target: "_blank", rel: "noopener noreferrer" }; // product clicks open a new tab
@@ -50,6 +51,7 @@ export default function AtelierHome() {
   const { config, api } = useStore();
   const cats = config?.categories || [];
 
+  const refresh = useAutoRefresh();
   const [groups, setGroups] = useState(null); // [{ cat, items }]
   useEffect(() => {
     if (!cats.length) { setGroups([]); return; }
@@ -58,7 +60,7 @@ export default function AtelierHome() {
         api.products({ category: c, limit: 10 }).then((r) => ({ cat: c, items: r.results || [] })).catch(() => ({ cat: c, items: [] }))
       )
     ).then(setGroups).catch(() => setGroups([]));
-  }, [cats.join("|")]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [cats.join("|"), refresh]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pool = useMemo(() => (groups || []).flatMap((g) => g.items).filter((p) => p.thumbnail), [groups]);
   const catCards = useMemo(() => (groups || []).filter((g) => g.items.some((i) => i.thumbnail)).slice(0, 3), [groups]);

@@ -1,4 +1,6 @@
 import './App.css'
+import Lenis from 'lenis';
+import 'lenis/dist/lenis.css';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
@@ -57,6 +59,31 @@ function AppShell() {
 
   useShareableTenantUrl(slug);
   useScrollReveal();
+
+  // Smooth (inertia) wheel scrolling. Smooths the native window scroll, so the
+  // reveal footer, sticky nav and mobile bottom nav keep working. Touch stays
+  // native (no touch smoothing). Skips any nested scrollable element — dropdowns,
+  // drawers, filter lists — so wheeling inside them scrolls THEM, not the page.
+  // Off entirely for prefers-reduced-motion.
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const canScroll = (el: HTMLElement) => {
+      const oy = getComputedStyle(el).overflowY;
+      return (oy === 'auto' || oy === 'scroll') && el.scrollHeight > el.clientHeight + 1;
+    };
+    const lenis = new Lenis({
+      smoothWheel: true,
+      autoRaf: true,
+      prevent: (node) => {
+        for (let el: HTMLElement | null = node; el && el !== document.body; el = el.parentElement) {
+          if (el.hasAttribute('data-lenis-prevent') || canScroll(el)) return true;
+        }
+        return false;
+      },
+    });
+    (window as any).__lenis = lenis; // so ScrollToTop can reset it in sync on route change
+    return () => { lenis.destroy(); (window as any).__lenis = null; };
+  }, []);
 
   // "Reveal footer": the footer is pinned behind the page; the content sits on
   // top with a solid background and a bottom margin equal to the footer's height,

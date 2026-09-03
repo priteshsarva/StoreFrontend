@@ -48,16 +48,18 @@ const TECH_BY_CAT = {
 };
 
 // Two palettes sharing one layout. Velocity = shoes (neon-lime + crimson);
-// Chrono = watches (gold + deep-blue). Colours are just CSS-var overrides on the
-// root, so the whole template recolours without touching the markup. Both keep
-// dark text on a bright ground, so nothing needs re-contrasting.
+// Chrono = watches (gold + deep-blue). These are the DEFAULT colours — the CSS
+// below blends the vendor's own theme over them (primary → main/hero bg,
+// secondary → soft sections, complementary → accents), each paired with the
+// contrast colour StoreContext computed, so text stays readable. A store with no
+// theme set just gets the variant default below.
 const VARIANTS = {
   velocity: {
-    css: { "--v-lime": "#d8ff53", "--v-lime-soft": "#e9ff8a", "--v-red": "#d90429", "--v-ink": "#0d0d0d" },
+    css: { "--v-lime-default": "#d8ff53", "--v-soft-default": "#e9ff8a", "--v-red-default": "#d90429", "--v-ink": "#0d0d0d" },
     isPrimary: isShoeCat, heroFallback: "Move Faster",
   },
   chrono: {
-    css: { "--v-lime": "#f2c94c", "--v-lime-soft": "#f7dd8f", "--v-red": "#1e3a8a", "--v-ink": "#141414" },
+    css: { "--v-lime-default": "#f2c94c", "--v-soft-default": "#f7dd8f", "--v-red-default": "#1e3a8a", "--v-ink": "#141414" },
     isPrimary: (c) => /watch|horolog|time|chrono/i.test(c || ""), heroFallback: "Time to Move",
   },
 };
@@ -159,7 +161,8 @@ export default function VelocityHome({ variant = "velocity" }) {
             <div className="flex items-center justify-center gap-7 mb-10">
               {["men", "women"].map((g) => (
                 <button key={g} onClick={() => setGender(gender === g ? "all" : g)}
-                  className={`v-display text-2xl md:text-3xl transition-colors border-b-4 pb-1 ${gender === g ? "text-black border-[var(--v-red)]" : "text-black/55 border-transparent hover:text-black"}`}>
+                  className="v-display text-2xl md:text-3xl transition-all border-b-4 pb-1"
+                  style={{ color: "var(--v-on-soft-c)", opacity: gender === g ? 1 : 0.5, borderColor: gender === g ? "var(--v-red)" : "transparent" }}>
                   {g === "men" ? "Men's" : "Women's"}
                 </button>
               ))}
@@ -187,8 +190,8 @@ export default function VelocityHome({ variant = "velocity" }) {
         <section className="v-lime py-16">
           <div className="v-wrap text-center max-w-3xl">
             <h2 className="v-display v-h2 mb-2">Stamp of Approval</h2>
-            <div className="eyebrow mb-6 !text-black/60">Straight from the {isShoeCat(shoeCat) ? "court" : "collection"}</div>
-            <p className="text-xl md:text-2xl text-black leading-relaxed font-light" style={{ textWrap: "pretty" }}>
+            <div className="eyebrow mb-6 v-on-lime">Straight from the {isShoeCat(shoeCat) ? "court" : "collection"}</div>
+            <p className="text-xl md:text-2xl leading-relaxed font-light" style={{ textWrap: "pretty" }}>
               “{config.about}”
             </p>
             <div className="v-display text-lg mt-6">— {storeName}</div>
@@ -240,7 +243,7 @@ export default function VelocityHome({ variant = "velocity" }) {
       <section className="v-ink text-white py-16">
         <div className="v-wrap grid md:grid-cols-2 gap-10 items-center">
           <div>
-            <h2 className="v-display v-h2 mb-8 text-[var(--v-lime)]">The Tech</h2>
+            <h2 className="v-display v-h2 mb-8" style={{ color: "color-mix(in srgb, var(--v-lime) 62%, #ffffff)" }}>The Tech</h2>
             <ul className="space-y-5">
               {tech.map((t) => (
                 <li key={t} className="reveal flex items-start gap-3">
@@ -280,20 +283,28 @@ export default function VelocityHome({ variant = "velocity" }) {
 
       <style>{`
         .velocity {
-          --v-lime: #d8ff53; --v-lime-soft: #e9ff8a; --v-red: #d90429; --v-ink: #0d0d0d;
+          /* vendor palette → template roles, with StoreContext's contrast pairs.
+             Falls back to the variant defaults (set inline) when no theme is set. */
+          --v-lime: var(--store-primary, var(--v-lime-default, #d8ff53));
+          --v-on-lime-c: var(--store-on-primary, #0d0d0d);
+          --v-lime-soft: var(--store-secondary, var(--v-soft-default, #e9ff8a));
+          --v-on-soft-c: var(--store-on-secondary, #0d0d0d);
+          --v-red: var(--store-complementary, var(--v-red-default, #d90429));
+          --v-on-red: var(--store-on-complementary, #ffffff);
           overflow-x: clip;
         }
         .velocity .v-wrap { max-width: 72rem; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; }
-        .velocity .v-lime { background: var(--v-lime); color: var(--v-ink); }
-        .velocity .v-lime-soft { background: var(--v-lime-soft); color: var(--v-ink); }
+        .velocity .v-lime { background: var(--v-lime); color: var(--v-on-lime-c); }
+        .velocity .v-lime-soft { background: var(--v-lime-soft); color: var(--v-on-soft-c); }
         .velocity .v-ink { background: var(--v-ink); }
-        /* readable body text on the lime backgrounds */
-        .velocity .v-on-lime { color: rgba(13,13,13,0.78); }
-        /* recolour product-card text/borders dark so cards read on the lime bg
-           (no white panel behind them) */
-        .velocity .v-cards .text-ink-soft { color: rgba(13,13,13,0.82); }
-        .velocity .v-cards .text-muted { color: rgba(13,13,13,0.60); }
-        .velocity .v-cards .border-line { border-color: rgba(13,13,13,0.30); }
+        /* muted body text on a coloured section: dim whatever contrast colour the
+           section inherited, so it adapts to any brand colour */
+        .velocity .v-on-lime { color: color-mix(in srgb, currentColor 80%, transparent); }
+        /* product cards sit directly on the soft section — recolour their text to
+           that section's contrast colour so they read on any brand bg */
+        .velocity .v-cards .text-ink-soft, .velocity .v-cards .text-ink { color: var(--v-on-soft-c); }
+        .velocity .v-cards .text-muted { color: color-mix(in srgb, var(--v-on-soft-c) 60%, transparent); }
+        .velocity .v-cards .border-line { border-color: color-mix(in srgb, var(--v-on-soft-c) 32%, transparent); }
         .velocity .v-display {
           font-weight: 900; font-style: italic; text-transform: uppercase;
           letter-spacing: -0.01em; line-height: 0.95; transform: skewX(-6deg);
@@ -302,7 +313,7 @@ export default function VelocityHome({ variant = "velocity" }) {
         .velocity .v-hero {
           position: relative; overflow: hidden; padding: clamp(3.5rem, 9vw, 7rem) 0 clamp(9rem, 22vw, 14rem);
           background: radial-gradient(120% 120% at 50% 0%, var(--v-lime) 40%, var(--v-lime-soft) 100%);
-          color: var(--v-ink);
+          color: var(--v-on-lime-c);
         }
         .velocity .v-hero-title { font-size: clamp(2.75rem, 12vw, 8rem); margin-top: 1rem; overflow-wrap: anywhere; }
         .velocity .v-hero-floats { position: absolute; inset: 0; }
@@ -316,7 +327,7 @@ export default function VelocityHome({ variant = "velocity" }) {
         .velocity .v-float-a:hover { transform: rotate(-14deg) translateY(-8px) scale(1.03); }
         .velocity .v-float-b:hover { transform: rotate(10deg) translateY(-8px) scale(1.03); }
         .velocity .v-pill-red, .velocity .v-tag-red {
-          display: inline-block; background: var(--v-red); color: #fff; font-weight: 700;
+          display: inline-block; background: var(--v-red); color: var(--v-on-red); font-weight: 700;
           text-transform: uppercase; letter-spacing: 0.08em;
         }
         .velocity .v-tag-red { font-size: 10px; padding: 3px 8px; border-radius: 3px; }
@@ -325,7 +336,7 @@ export default function VelocityHome({ variant = "velocity" }) {
           letter-spacing: 0.04em; font-size: 14px; padding: 14px 30px; border-radius: 999px;
           transition: transform 0.15s ease, filter 0.15s ease;
         }
-        .velocity .v-btn-red { background: var(--v-red); color: #fff; }
+        .velocity .v-btn-red { background: var(--v-red); color: var(--v-on-red); }
         .velocity .v-btn-black { background: var(--v-ink); color: #fff; }
         .velocity .v-btn-red:hover, .velocity .v-btn-black:hover { transform: translateY(-2px); filter: brightness(1.08); }
         .velocity .v-banner {

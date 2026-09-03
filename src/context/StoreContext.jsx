@@ -74,7 +74,10 @@ export function StoreProvider({ children }) {
   useEffect(loadConfig, [slug]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (config?.theme) applyTheme(config.theme);
+    // palette_mode "default" = ignore the vendor's brand colours and let the
+    // chosen layout use its own built-in palette (the --store-* vars stay unset,
+    // so every var(--store-*, <layout default>) falls back to the default).
+    if (config?.theme && config.theme.palette_mode !== "default") applyTheme(config.theme);
     if (config?.store_name) {
       document.title = config.store_name;
     }

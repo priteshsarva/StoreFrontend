@@ -55,19 +55,46 @@ const TECH_BY_CAT = {
 // theme set just gets the variant default below.
 const VARIANTS = {
   velocity: {
-    css: { "--v-lime-default": "#d8ff53", "--v-soft-default": "#e9ff8a", "--v-red-default": "#d90429", "--v-ink": "#0d0d0d" },
+    d: { lime: "#d8ff53", soft: "#e9ff8a", red: "#d90429", ink: "#0d0d0d" },
     isPrimary: isShoeCat, heroFallback: "Move Faster",
   },
   chrono: {
-    css: { "--v-lime-default": "#f2c94c", "--v-soft-default": "#f7dd8f", "--v-red-default": "#1e3a8a", "--v-ink": "#141414" },
+    d: { lime: "#f2c94c", soft: "#f7dd8f", red: "#1e3a8a", ink: "#141414" },
     isPrimary: (c) => /watch|horolog|time|chrono/i.test(c || ""), heroFallback: "Time to Move",
   },
 };
+
+// Build the template's colour vars for one of two modes:
+//   • "brand"   → the vendor's palette (StoreContext already put --store-* on the
+//                 root with contrast pairs); fall back to the variant default per
+//                 slot the vendor didn't set.
+//   • "default" → the variant's own built-in palette, ignoring --store-* entirely
+//                 (can't rely on a CSS var() fallback — :root always defines
+//                 --store-primary, so we pin literal values here).
+function paletteVars(d, brand) {
+  return brand ? {
+    "--v-lime": `var(--store-primary, ${d.lime})`,   "--v-on-lime-c": "var(--store-on-primary, #0d0d0d)",
+    "--v-lime-soft": `var(--store-secondary, ${d.soft})`, "--v-on-soft-c": "var(--store-on-secondary, #0d0d0d)",
+    "--v-red": `var(--store-complementary, ${d.red})`,   "--v-on-red": "var(--store-on-complementary, #ffffff)",
+    "--v-ink": d.ink,
+  } : {
+    "--v-lime": d.lime, "--v-on-lime-c": "#0d0d0d",
+    "--v-lime-soft": d.soft, "--v-on-soft-c": "#0d0d0d",
+    "--v-red": d.red, "--v-on-red": "#ffffff",
+    "--v-ink": d.ink,
+  };
+}
 
 export default function VelocityHome({ variant = "velocity" }) {
   const V = VARIANTS[variant] || VARIANTS.velocity;
   const { config, api } = useStore();
   const cats = config?.categories || [];
+
+  // Colour source: the vendor's brand palette (only when they picked "My brand
+  // palette" AND actually set colours) vs the layout's own default palette.
+  const theme = config?.theme || {};
+  const useBrand = theme.palette_mode !== "default" && !!(theme.primary || theme.secondary || theme.complementary);
+  const css = useMemo(() => paletteVars(V.d, useBrand), [variant, useBrand]); // eslint-disable-line react-hooks/exhaustive-deps
   const shoeCat = useMemo(() => cats.find(V.isPrimary) || cats[0], [cats.join("|")]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [products, setProducts] = useState(null); // shoe products
@@ -100,7 +127,7 @@ export default function VelocityHome({ variant = "velocity" }) {
   const shopShoes = withStore(`/c/${encodeURIComponent(shoeCat || "all")}`);
 
   return (
-    <div className="velocity" style={V.css}>
+    <div className="velocity" style={css}>
       {/* WhatsApp CTA sits between the header and the hero */}
       <WhatsAppPromoBar />
 
@@ -282,17 +309,10 @@ export default function VelocityHome({ variant = "velocity" }) {
           their own category pages — never mixed onto this home. */}
 
       <style>{`
-        .velocity {
-          /* vendor palette → template roles, with StoreContext's contrast pairs.
-             Falls back to the variant defaults (set inline) when no theme is set. */
-          --v-lime: var(--store-primary, var(--v-lime-default, #d8ff53));
-          --v-on-lime-c: var(--store-on-primary, #0d0d0d);
-          --v-lime-soft: var(--store-secondary, var(--v-soft-default, #e9ff8a));
-          --v-on-soft-c: var(--store-on-secondary, #0d0d0d);
-          --v-red: var(--store-complementary, var(--v-red-default, #d90429));
-          --v-on-red: var(--store-on-complementary, #ffffff);
-          overflow-x: clip;
-        }
+        /* --v-lime / --v-lime-soft / --v-red / --v-ink and their --v-on-* contrast
+           pairs are set inline per palette mode (see paletteVars); here we only
+           consume them. */
+        .velocity { overflow-x: clip; }
         .velocity .v-wrap { max-width: 72rem; margin: 0 auto; padding-left: 1rem; padding-right: 1rem; }
         .velocity .v-lime { background: var(--v-lime); color: var(--v-on-lime-c); }
         .velocity .v-lime-soft { background: var(--v-lime-soft); color: var(--v-on-soft-c); }

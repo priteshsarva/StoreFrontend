@@ -266,7 +266,10 @@ export default function AtelierHome() {
       {!groups && <div className="min-h-[40vh]" />}
 
       <style>{`
-        .atelier { font-family: "Helvetica Neue", Helvetica, Arial, "Inter", system-ui, sans-serif; }
+        /* clip (not scroll) any element that bleeds off the edge — e.g. the
+           offset circular text — so it runs off-page WITHOUT a horizontal
+           scrollbar shifting the layout and the fixed bottom nav. */
+        .atelier { font-family: "Helvetica Neue", Helvetica, Arial, "Inter", system-ui, sans-serif; overflow-x: clip; }
         /* force the grotesk over any global display-serif heading rule */
         .atelier .a-display, .atelier .a-quote {
           font-family: "Helvetica Neue", Helvetica, Arial, "Inter", system-ui, sans-serif;

@@ -10,6 +10,7 @@ import OriginalHome from "./OriginalHome";
 import VelocityHome from "./VelocityHome";
 import AtelierHome from "./AtelierHome";
 import RedlineHome from "./RedlineHome";
+import HavenHome from "./HavenHome";
 
 export default function StoreHome() {
   const { config } = useStore();
@@ -25,6 +26,7 @@ export default function StoreHome() {
   if (preset === "chrono") return <VelocityHome variant="chrono" />;
   if (preset === "atelier") return <AtelierHome />;
   if (preset === "redline") return <RedlineHome />;
+  if (preset === "haven") return <HavenHome />;
   if (preset === "original") return <OriginalHome />;
 
   // vendor explicitly configured a custom section layout → render that

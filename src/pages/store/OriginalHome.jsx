@@ -2,7 +2,7 @@
 //   hero → browse categories → per-category ("Our Best … Collection" carousel
 //   + "New Arrivals …" grid + View All). Everything reads the vendor's own
 //   config + products; nothing is hardcoded to one store.
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useStore } from "../../context/StoreContext";
 import StoreHero from "../../components/store/StoreHero";
@@ -50,6 +50,23 @@ export default function OriginalHome() {
     api.products({ category: "all", limit: 14 }).then((r) => setAllProducts(r.results || [])).catch(() => setAllProducts([]));
   }, [multiCat, refresh]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // No repeats: give each category's "Best of" rail and "New arrivals" grid a
+  // DISJOINT slice, and drop from the mixed "All products" rail anything already
+  // shown above. So every product appears at most once on the page.
+  const keyOf = (p) => `${p.dbName}-${p.productId}`;
+  const catAlloc = useMemo(() => {
+    const map = {}; const used = new Set();
+    for (const c of categories) {
+      const items = byCat?.[c] || [];
+      const rail = items.slice(0, 8);
+      const grid = items.slice(8, 20);
+      map[c] = { rail, grid };
+      [...rail, ...grid].forEach((p) => used.add(keyOf(p)));
+    }
+    return { map, used };
+  }, [byCat, categories.join("|")]); // eslint-disable-line react-hooks/exhaustive-deps
+  const allRail = useMemo(() => (allProducts || []).filter((p) => !catAlloc.used.has(keyOf(p))), [allProducts, catAlloc]);
+
   return (
     <>
       <StoreHero />
@@ -76,27 +93,35 @@ export default function OriginalHome() {
         <div className="text-center py-20 text-muted">Loading products…</div>
       ) : (
         categories.map((c) => {
-          const products = byCat[c] || [];
-          if (!products.length) return null;
+          const { rail = [], grid = [] } = catAlloc.map[c] || {};
+          if (!rail.length && !grid.length) return null;
           return (
             <section key={c}>
-              <SectionHeading eyebrow="Curated">Best of {labelOf(c)}</SectionHeading>
-              <div className="max-w-screen-xl mx-auto px-4 lg:px-6 pb-10">
-                <ProductRail products={products} />
-              </div>
+              {rail.length > 0 && (
+                <>
+                  <SectionHeading eyebrow="Curated">Best of {labelOf(c)}</SectionHeading>
+                  <div className="max-w-screen-xl mx-auto px-4 lg:px-6 pb-10">
+                    <ProductRail products={rail} />
+                  </div>
+                </>
+              )}
 
-              <SectionHeading eyebrow="Just in">New arrivals</SectionHeading>
-              <div className="max-w-screen-xl mx-auto px-4 lg:px-6 pb-12">
-                <div className="stagger grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-5 gap-y-9">
-                  {products.slice(0, 12).map((p) => (
-                    <ProductCard key={`${p.dbName}-${p.productId}`} product={p} />
-                  ))}
-                </div>
-                <div className="flex justify-center mt-10">
-                  <Link to={withStore(`/c/${encodeURIComponent(c)}`)} className="btn btn-outline">
-                    View all {labelOf(c)}
-                  </Link>
-                </div>
+              {grid.length > 0 && (
+                <>
+                  <SectionHeading eyebrow="Just in">New arrivals</SectionHeading>
+                  <div className="max-w-screen-xl mx-auto px-4 lg:px-6 pb-12">
+                    <div className="stagger grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-5 gap-y-9">
+                      {grid.map((p) => (
+                        <ProductCard key={`${p.dbName}-${p.productId}`} product={p} />
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+              <div className="flex justify-center pb-12">
+                <Link to={withStore(`/c/${encodeURIComponent(c)}`)} className="btn btn-outline">
+                  View all {labelOf(c)}
+                </Link>
               </div>
             </section>
           );
@@ -105,11 +130,11 @@ export default function OriginalHome() {
 
       {/* All Products — a mixed rail across every category, with a "shop all" that
           opens the full mixed listing. Only for multi-category stores. */}
-      {multiCat && allProducts && allProducts.length > 0 && (
+      {multiCat && allRail.length > 0 && (
         <section>
           <SectionHeading eyebrow="Everything">All products</SectionHeading>
           <div className="max-w-screen-xl mx-auto px-4 lg:px-6 pb-10">
-            <ProductRail products={allProducts} />
+            <ProductRail products={allRail} />
             <div className="flex justify-center mt-10">
               <Link to={withStore("/c/all")} className="btn btn-outline">Shop all products</Link>
             </div>

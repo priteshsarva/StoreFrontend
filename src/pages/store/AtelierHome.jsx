@@ -70,20 +70,27 @@ export default function AtelierHome() {
   const shopAll = withStore("/c/all");
   const pdp = (p) => withStore(`/p/${p.dbName}/${p.productId}`);
 
-  // Each full-bleed banner sits on a real product's photo — so it links straight
-  // to that product ("Buy this now"). The hero is the exception when the vendor
-  // set their OWN campaign image (then it's not a product, so it shops the store).
-  const heroProduct = hero.image_url ? null : pool[0];
-  const heroImg = hero.image_url || pool[0]?.thumbnail;
-  const heroTitle = hero.title || "Timeless style for modern lives";
-  const editorialProduct = pool[4] || pool[0];
-  const editorialImg = editorialProduct?.thumbnail || heroImg;
-  const bannerProduct = pool[5] || pool[1] || pool[0];
-  const bannerImg = bannerProduct?.thumbnail || heroImg;
+  // Sequential allocator → every section gets a fresh, never-seen slice, so no
+  // product repeats anywhere on the page. Each full-bleed banner sits on a real
+  // product's photo and links straight to it ("Buy this now"); the hero is the
+  // exception when the vendor set their OWN campaign image.
+  const a = useMemo(() => {
+    let i = 0;
+    const take = (n) => pool.slice(i, i += n);
+    const heroProduct = hero.image_url ? null : take(1)[0];
+    const bestsellers = take(12);
+    const editorialProduct = take(1)[0];
+    const collage = take(5);
+    const bannerProduct = take(1)[0];
+    const arrivals = take(15);
+    return { heroProduct, bestsellers, editorialProduct, collage, bannerProduct, arrivals };
+  }, [pool, hero.image_url]);
 
-  const bestsellers = pool.slice(0, 12);
-  const collage = pool.slice(0, 5);
-  const arrivals = pool.slice(0, 15);
+  const { heroProduct, bestsellers, editorialProduct, collage, bannerProduct, arrivals } = a;
+  const heroImg = hero.image_url || heroProduct?.thumbnail || pool[0]?.thumbnail;
+  const heroTitle = hero.title || "Timeless style for modern lives";
+  const editorialImg = editorialProduct?.thumbnail || heroImg;
+  const bannerImg = bannerProduct?.thumbnail || heroImg;
 
   // Best-seller rail: arrow controls that actually slide the row.
   const railRef = useRef(null);

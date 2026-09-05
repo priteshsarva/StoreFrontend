@@ -110,20 +110,32 @@ export default function VelocityHome({ variant = "velocity" }) {
   const withImg = list.filter((p) => p.thumbnail);
   const pdp = (p) => withStore(`/p/${p.dbName}/${p.productId}`);
   const newTab = { target: "_blank", rel: "noopener noreferrer" }; // product clicks open in a new tab
+  const keyOf = (p) => `${p.dbName}-${p.productId}`;
+  // Reserve distinct products for the campaign shots (hero floats, upgrade tiles,
+  // spotlights, tech image, marquee) so none of them repeats — the main grid then
+  // shows everything ELSE. Across the page each product appears exactly once.
+  const dec = useMemo(() => {
+    let i = 0; const take = (n) => withImg.slice(i, i += n);
+    const floats = take(2), upgradeImgs = take(3), spotlights = take(2);
+    const techImg = take(1)[0], marquee = take(6);
+    const usedKeys = new Set([...floats, ...upgradeImgs, ...spotlights, ...(techImg ? [techImg] : []), ...marquee].map(keyOf));
+    return { floats, upgradeImgs, spotlights, techImg, marquee, usedKeys };
+  }, [withImg]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { floats, upgradeImgs, spotlights, techImg, marquee, usedKeys } = dec;
+
   const hasGender = useMemo(() => list.some((p) => /women/i.test(p.catName || "")) || list.some((p) => /\bmen/i.test(p.catName || "")), [list]);
   const shown = useMemo(() => {
-    if (gender === "all" || !hasGender) return list;
-    if (gender === "women") return list.filter((p) => /women/i.test(p.catName || ""));
-    return list.filter((p) => /\bmen/i.test(p.catName || "") && !/women/i.test(p.catName || ""));
-  }, [list, gender, hasGender]);
+    // grid = products NOT already used in a campaign shot above
+    const base = list.filter((p) => !usedKeys.has(keyOf(p)));
+    if (gender === "all" || !hasGender) return base;
+    if (gender === "women") return base.filter((p) => /women/i.test(p.catName || ""));
+    return base.filter((p) => /\bmen/i.test(p.catName || "") && !/women/i.test(p.catName || ""));
+  }, [list, gender, hasGender, usedKeys]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const hero = config?.hero || {};
   const storeName = config?.store_name || "";
   const upgrades = upgradesFor(shoeCat);
   const tech = isShoeCat(shoeCat) ? TECH_BY_CAT.shoes : /watch|horolog|time|chrono/i.test(shoeCat || "") ? TECH_BY_CAT.watches : TECH_BY_CAT.default;
-  const floats = withImg.slice(0, 2);              // hero floating shoes (clickable)
-  const marquee = withImg.slice(0, 10);            // "made for" scrolling strip
-  const spotlights = withImg.slice(0, 2);
   const shopShoes = withStore(`/c/${encodeURIComponent(shoeCat || "all")}`);
 
   return (
@@ -160,7 +172,7 @@ export default function VelocityHome({ variant = "velocity" }) {
           <h2 className="v-display v-h2 text-center mb-10">The Upgrades</h2>
           <div className="grid md:grid-cols-3 gap-8">
             {upgrades.map((u, i) => {
-              const p = withImg[i];
+              const p = upgradeImgs[i];
               const Media = p ? Link : "div";
               return (
                 <div key={u.title} className="reveal flex flex-col items-center text-center">
@@ -281,9 +293,9 @@ export default function VelocityHome({ variant = "velocity" }) {
             </ul>
             <Link to={shopShoes} className="v-btn-red mt-9">Shop Now</Link>
           </div>
-          {withImg[0] && (
-            <Link to={pdp(withImg[0])} {...newTab} className="reveal block">
-              <img src={withImg[0].thumbnail} alt={withImg[0].productName} referrerPolicy="no-referrer" className="w-full object-contain drop-shadow-2xl" />
+          {techImg && (
+            <Link to={pdp(techImg)} {...newTab} className="reveal block">
+              <img src={techImg.thumbnail} alt={techImg.productName} referrerPolicy="no-referrer" className="w-full object-contain drop-shadow-2xl" />
             </Link>
           )}
         </div>

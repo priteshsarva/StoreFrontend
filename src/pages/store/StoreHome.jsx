@@ -9,6 +9,7 @@ import WhatsAppPromoBar from "../../components/store/WhatsAppPromoBar";
 import OriginalHome from "./OriginalHome";
 import VelocityHome from "./VelocityHome";
 import AtelierHome from "./AtelierHome";
+import RedlineHome from "./RedlineHome";
 
 export default function StoreHome() {
   const { config } = useStore();
@@ -23,6 +24,7 @@ export default function StoreHome() {
   if (preset === "velocity") return <VelocityHome variant="velocity" />;
   if (preset === "chrono") return <VelocityHome variant="chrono" />;
   if (preset === "atelier") return <AtelierHome />;
+  if (preset === "redline") return <RedlineHome />;
   if (preset === "original") return <OriginalHome />;
 
   // vendor explicitly configured a custom section layout → render that

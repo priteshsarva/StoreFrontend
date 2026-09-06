@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import { Check } from "lucide-react";
 import { useStore } from "../../context/StoreContext";
 import { useCart } from "../../context/CartContext";
 import { inr } from "../../lib/money";
 import { withStore } from "../../lib/tenant";
 import { useCustomerAuth } from "../../context/CustomerAuthContext";
+import { setPending } from "../../lib/pendingPay";
 
 const INPUT = "w-full border border-line-strong bg-paper px-3.5 py-2.5 text-sm text-ink placeholder:text-muted focus:outline-none focus:border-ink transition-colors";
 
@@ -14,6 +15,7 @@ export default function CheckoutPage() {
   const { items: cartItems, total: cartTotal, clear } = useCart();
   const { customer, booted, sessionFromCheckout } = useCustomerAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const quickItem = location.state?.quickItem || null;
   const lineItems = quickItem ? [quickItem] : cartItems;
@@ -66,11 +68,23 @@ export default function CheckoutPage() {
         buyer_email: !customer && form.email ? form.email.trim() : undefined,
         note,
       });
-      setResult(r);
       // Guest checkout: the backend hands back a session for the (new or unclaimed)
       // account — log them straight in so their order history is theirs.
       if (r.token) sessionFromCheckout(r.token, r.customer);
       if (!quickItem) clear();
+
+      // Store has UPI set up → go to the pay screen (QR + deep link + resume).
+      // Save the payment so a refresh / return from the UPI app can restore it.
+      if (config?.upi_id) {
+        setPending({
+          slug: config.slug, orderNo: r.order_no, total: r.total,
+          storeName: config.store_name, upiId: config.upi_id,
+          upiName: config.upi_name, whatsapp: config.whatsapp,
+        });
+        navigate(withStore(`/pay/${encodeURIComponent(r.order_no)}`));
+        return;
+      }
+      setResult(r); // no UPI configured → WhatsApp-only confirmation (unchanged)
     } catch (err) {
       setError(err.message);
     } finally {

@@ -19,6 +19,8 @@ import StoreCategoryPage from './pages/store/StoreCategoryPage.jsx';
 import StoreProductPage from './pages/store/StoreProductPage.jsx';
 import CartPage from './pages/store/CartPage.jsx';
 import CheckoutPage from './pages/store/CheckoutPage.jsx';
+import PaymentPage from './pages/store/PaymentPage.jsx';
+import PendingPayBanner from './components/store/PendingPayBanner.jsx';
 import AccountPage from './pages/store/AccountPage.jsx';
 import PolicyPage from './pages/store/PolicyPage.jsx';
 import FaqPage from './pages/store/FaqPage.jsx';
@@ -134,6 +136,7 @@ function AppShell() {
               the footer until the page is scrolled to the very bottom */}
           <div style={{ position: 'relative', zIndex: 1, background: 'var(--color-paper, #ffffff)', marginBottom: footerH }}>
             <StoreNavBar />
+            <PendingPayBanner />
             <Routes>
               <Route path="/" element={<StoreHome />} />
               <Route path="/c/:category" element={<StoreCategoryPage />} />
@@ -142,6 +145,7 @@ function AppShell() {
               <Route path="/cart" element={<CartPage />} />
               <Route path="/wishlist" element={<WishlistPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/pay/:orderNo" element={<PaymentPage />} />
               <Route path="/account" element={<AccountPage />} />
               <Route path="/policy/:kind" element={<PolicyPage />} />
               <Route path="/faq" element={<FaqPage />} />

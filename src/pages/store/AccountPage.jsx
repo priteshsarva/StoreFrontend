@@ -154,9 +154,13 @@ function AccountDashboard() {
         ) : (
           <div className="flex flex-col gap-2">
             {orders.map((o) => {
-              const unpaid = o.payment_status !== "verified";
-              const payLabel = o.payment_status === "verified" ? "Paid" : o.payment_status === "claimed" ? "Payment pending confirmation" : "Payment pending";
-              const payColor = o.payment_status === "verified" ? "#14663a" : "#8a6100";
+              // Paid if explicitly verified, or the order has moved past payment
+              // (processing/completed) — so Pay-now hides even if payment_status
+              // is absent. Cancelled orders can't be paid either.
+              const paid = o.payment_status === "verified" || ["processing", "completed"].includes(o.status);
+              const canPay = !paid && o.status !== "cancelled";
+              const payLabel = paid ? "Paid" : o.payment_status === "claimed" ? "Payment pending confirmation" : "Payment pending";
+              const payColor = paid ? "#14663a" : "#8a6100";
               const det = orderDetail[o.order_no];
               return (
                 <div key={o.id} className="border border-line bg-paper text-sm">
@@ -195,7 +199,7 @@ function AccountDashboard() {
                     </div>
                   )}
 
-                  {unpaid && config?.payment?.upi_id && (
+                  {canPay && config?.payment?.upi_id && (
                     <div className="px-4 pb-4">
                       <Link to={withStore(`/pay/${encodeURIComponent(o.order_no)}`)} className="btn btn-primary w-full">
                         {o.payment_status === "claimed" ? "View / complete payment" : "Pay now"}

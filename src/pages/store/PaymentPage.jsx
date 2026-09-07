@@ -25,7 +25,12 @@ export default function PaymentPage() {
   // Pull the order from the server when the buyer is logged in — gives us the
   // real amount + payment status even with no saved pending payment.
   useEffect(() => {
-    api.myOrder(orderNo).then((r) => setSrv(r.order || null)).catch(() => setSrv(null));
+    api.myOrder(orderNo).then((r) => {
+      setSrv(r.order || null);
+      // If it's already paid, drop the saved payment so the "Finish paying"
+      // banner stops showing for a completed order.
+      if (r.order && (r.order.payment_status === "verified" || ["processing", "completed"].includes(r.order.status))) clearPending(config?.slug);
+    }).catch(() => setSrv(null));
   }, [orderNo]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const payCfg = config?.payment || {};
@@ -41,7 +46,7 @@ export default function PaymentPage() {
     };
   }, [base, total, orderNo, config]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const serverPaid = srv && (srv.payment_status === "verified");
+  const serverPaid = srv && (srv.payment_status === "verified" || ["processing", "completed"].includes(srv.status));
   const serverClaimed = srv && srv.payment_status === "claimed";
 
   function onClaim() {

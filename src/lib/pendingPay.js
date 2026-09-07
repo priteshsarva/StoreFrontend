@@ -23,6 +23,16 @@ export function clearPending(slug) {
   try { localStorage.removeItem(key(slug)); } catch { /* ignore */ }
 }
 
+// Buyer said they've paid (tapped WhatsApp). We keep the record (so the pay page
+// still shows the QR if they return) but flag it claimed so the site-wide banner
+// stops nagging. The real paid/verified state is set by the vendor/admin.
+export function markClaimed(slug) {
+  try {
+    const p = JSON.parse(localStorage.getItem(key(slug)) || "null");
+    if (p) { p.claimed = true; localStorage.setItem(key(slug), JSON.stringify(p)); }
+  } catch { /* ignore */ }
+}
+
 // upi://pay deep link — opens the phone's UPI app chooser (GPay/PhonePe/Paytm)
 // with amount + order reference pre-filled. Same string powers the QR.
 export function upiLink({ upiId, upiName, storeName, total, orderNo }) {

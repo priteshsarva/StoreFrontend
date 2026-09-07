@@ -1,13 +1,12 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
-import { Check, X } from "lucide-react";
+import { Check } from "lucide-react";
 import { useStore } from "../../context/StoreContext";
 import { useCart } from "../../context/CartContext";
 import { inr } from "../../lib/money";
 import { withStore } from "../../lib/tenant";
 import { useCustomerAuth } from "../../context/CustomerAuthContext";
-import { setPending, clearPending } from "../../lib/pendingPay";
-import UpiPayCard from "../../components/store/UpiPayCard";
+import { setPending } from "../../lib/pendingPay";
 
 const INPUT = "w-full border border-line-strong bg-paper px-3.5 py-2.5 text-sm text-ink placeholder:text-muted focus:outline-none focus:border-ink transition-colors";
 
@@ -22,29 +21,15 @@ export default function CheckoutPage() {
   const lineItems = quickItem ? [quickItem] : cartItems;
   const total = quickItem ? quickItem.price * quickItem.qty : cartTotal;
 
-  // Vendor chooses when the UPI pay popup appears (portal → store settings):
-  // "after" (default) = pay after placing the order; "before" = pay first, then
-  // fill delivery details. Only relevant when the store has a UPI ID.
-  const hasUpi = !!config?.upi_id;
-  const payBefore = hasUpi && config?.payment_position === "before";
+  const pay = config?.payment || null; // { mode, upi_id, upi_name, whatsapp }
+  const hasUpi = !!(pay && pay.upi_id);
 
   const [addresses, setAddresses] = useState([]);
   const [addressId, setAddressId] = useState("");
   const [form, setForm] = useState({ name: "", phone: "", email: "", line1: "", line2: "", city: "", state: "", pincode: "" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
-  const [result, setResult] = useState(null); // { order_no, total, wa_url }
-
-  // UPI popup state. `utr` is shared across the before/after popups; `paidBefore`
-  // records that the buyer paid before entering their address.
-  const [payModal, setPayModal] = useState(null); // null | { mode:'before'|'after', pay }
-  const [utr, setUtr] = useState("");
-  const [paidBefore, setPaidBefore] = useState(false);
-  const tempRef = useMemo(() => "TMP-" + Math.random().toString(36).slice(2, 7).toUpperCase(), []);
-  const payObj = (orderNo, amount) => ({
-    orderNo, total: amount, storeName: config?.store_name || "Store",
-    upiId: config?.upi_id, upiName: config?.upi_name || "", whatsapp: config?.whatsapp || "",
-  });
+  const [result, setResult] = useState(null); // no-UPI stores: WhatsApp confirmation
 
   useEffect(() => {
     if (customer) {
@@ -58,14 +43,7 @@ export default function CheckoutPage() {
 
   useEffect(() => { api.track("begin_checkout", { value: total }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // "Pay before address": open the pay popup as soon as checkout loads.
-  useEffect(() => {
-    if (payBefore && lineItems.length && !paidBefore) setPayModal({ mode: "before", pay: payObj(tempRef, total) });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
   if (!booted) return null;
-  // checked after `result` below: a successful cart checkout clears the cart,
-  // which would otherwise make this fire instead of the success screen.
   if (!result && lineItems.length === 0) {
     return (
       <div className="max-w-screen-sm mx-auto px-4 py-24 text-center text-muted">
@@ -81,9 +59,7 @@ export default function CheckoutPage() {
     setBusy(true); setError(null);
     try {
       const address = customer && addressId ? undefined : form;
-      const noteParts = lineItems.filter((it) => it.size).map((it) => `${it.name}: Size ${it.size}`);
-      if (paidBefore && utr.trim()) noteParts.push(`UPI UTR: ${utr.trim()}`);
-      const note = noteParts.join("; ") || undefined;
+      const note = lineItems.filter((it) => it.size).map((it) => `${it.name}: Size ${it.size}`).join("; ") || undefined;
 
       const r = await api.createOrder({
         items: lineItems.map((it) => ({ product_id: it.product_id, db_name: it.db_name, qty: it.qty, size: it.size || undefined })),
@@ -93,37 +69,26 @@ export default function CheckoutPage() {
         buyer_email: !customer && form.email ? form.email.trim() : undefined,
         note,
       });
-      // Guest checkout: the backend hands back a session for the (new or unclaimed)
-      // account — log them straight in so their order history is theirs.
       if (r.token) sessionFromCheckout(r.token, r.customer);
       if (!quickItem) clear();
 
-      if (hasUpi && !paidBefore) {
-        // Pay AFTER the order (default, or "before" that the buyer skipped):
-        // open the UPI pay popup. Save it so a refresh / return from the UPI app
-        // can restore it via the /pay page + banner.
+      // Store collects by UPI → go to the payment PAGE (no popup). Saved so a
+      // refresh / return from the UPI app restores it; cleared once the buyer
+      // claims payment (taps WhatsApp) so it never nags again.
+      if (hasUpi) {
         setPending({
           slug: config.slug, orderNo: r.order_no, total: r.total,
-          storeName: config.store_name, upiId: config.upi_id,
-          upiName: config.upi_name, whatsapp: config.whatsapp,
+          storeName: config.store_name, upiId: pay.upi_id, upiName: pay.upi_name, whatsapp: pay.whatsapp,
         });
-        setPayModal({ mode: "after", pay: payObj(r.order_no, r.total) });
+        navigate(withStore(`/pay/${encodeURIComponent(r.order_no)}`));
         return;
       }
-      setResult(r); // no UPI, or already paid before address → confirmation screen
+      setResult(r); // no UPI configured → WhatsApp-only confirmation
     } catch (err) {
       setError(err.message);
     } finally {
       setBusy(false);
     }
-  }
-
-  // Closing the popup: after-mode → order exists, keep the saved payment (the
-  // banner + /pay page recover it) and drop the buyer back to the shop; before-mode
-  // → just close, they can still pay via the after-popup on "Place order".
-  function closePayModal() {
-    if (payModal?.mode === "after") navigate(withStore("/"));
-    setPayModal(null);
   }
 
   if (result) {
@@ -139,11 +104,6 @@ export default function CheckoutPage() {
         {result.token && (
           <p className="text-sm text-ink-soft mb-6">
             You're now signed in — see this order any time under <Link to={withStore("/account")} className="text-ink underline">your account</Link>.
-          </p>
-        )}
-        {result.account_exists && (
-          <p className="text-sm text-ink-soft mb-6">
-            You already have an account with this email. <Link to={withStore("/account")} className="text-ink underline">Log in</Link> to see this order in your history.
           </p>
         )}
         <a href={result.wa_url} target="_blank" rel="noreferrer" className="btn text-white" style={{ background: "#25D366" }}>
@@ -174,18 +134,6 @@ export default function CheckoutPage() {
           <span className="price text-xl text-ink">{inr(total)}</span>
         </div>
       </div>
-
-      {/* "Pay before address": paid state, or a re-open button if they closed it */}
-      {payBefore && paidBefore && (
-        <div className="text-sm text-green-700 bg-green-50 border border-green-200 px-3 py-2 mb-5">
-          ✓ Payment done{utr.trim() ? ` (UTR ${utr.trim()})` : ""}. Add your delivery details and place the order.
-        </div>
-      )}
-      {payBefore && !paidBefore && !payModal && (
-        <button type="button" onClick={() => setPayModal({ mode: "before", pay: payObj(tempRef, total) })} className="btn btn-primary w-full mb-5">
-          Pay {inr(total)} now
-        </button>
-      )}
 
       <form onSubmit={submit}>
         {customer && addresses.length > 0 && (
@@ -236,27 +184,6 @@ export default function CheckoutPage() {
           {busy ? "Placing order…" : "Place order"}
         </button>
       </form>
-
-      {payModal && (
-        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center overflow-y-auto bg-black/50 p-4" onClick={closePayModal}>
-          <div className="w-full max-w-sm bg-paper rounded-lg my-8" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-start justify-between px-5 pt-4">
-              <div>
-                <h2 className="text-lg text-ink">{payModal.mode === "before" ? "Pay to place your order" : `Order ${payModal.pay.orderNo} placed`}</h2>
-                <p className="text-sm text-ink-soft">{payModal.mode === "before" ? "Pay now, then add your delivery details." : "Pay now to confirm it, then send the screenshot."}</p>
-              </div>
-              <button type="button" onClick={closePayModal} className="text-muted hover:text-ink transition-colors ml-2 mt-0.5"><X size={18} /></button>
-            </div>
-            <div className="px-5 pb-5 pt-3">
-              <UpiPayCard pay={payModal.pay} utr={utr} onUtr={setUtr}>
-                {payModal.mode === "before"
-                  ? <button type="button" onClick={() => { setPaidBefore(true); setPayModal(null); }} className="btn btn-outline w-full mt-3">I've paid — continue to delivery details</button>
-                  : <button type="button" onClick={() => { clearPending(config?.slug); navigate(withStore("/")); }} className="btn btn-outline w-full mt-3">Done</button>}
-              </UpiPayCard>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -13,7 +13,9 @@ export default function PendingPayBanner() {
   const { config } = useStore();
   const location = useLocation();
   const pending = getPending(config?.slug);
-  if (!pending || location.pathname.startsWith("/pay/")) return null;
+  // Hide once the buyer has claimed payment (tapped WhatsApp) — no more nagging;
+  // the vendor/admin verifies from here. Also hidden on the pay page itself.
+  if (!pending || pending.claimed || location.pathname.startsWith("/pay/")) return null;
 
   return (
     <Link to={withStore(`/pay/${encodeURIComponent(pending.orderNo)}`)}

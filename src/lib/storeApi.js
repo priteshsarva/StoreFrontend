@@ -132,6 +132,9 @@ export const storeApi = (slug) => ({
   // auth:true attaches the customer token when logged in, but the backend allows
   // guest checkout too — omitting the header (not logged in) is not an error.
   createOrder: (body) => req(slug, "/orders", { method: "POST", body, auth: true }),
+  // Buyer marks an order paid (tapped WhatsApp) — flips it to 'claimed' so the
+  // pay page stops prompting; the vendor/admin verifies for real later.
+  claimPayment: (orderNo) => req(slug, `/orders/${encodeURIComponent(orderNo)}/claim`, { method: "POST" }),
   myOrders: () => req(slug, "/me/orders", { auth: true }),
   myOrder: (orderNo) => req(slug, `/me/orders/${orderNo}`, { auth: true }),
 });

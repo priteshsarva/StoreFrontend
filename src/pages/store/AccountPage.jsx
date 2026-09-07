@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useStore } from "../../context/StoreContext";
 import { useCustomerAuth } from "../../context/CustomerAuthContext";
 import { inr } from "../../lib/money";
+import { withStore } from "../../lib/tenant";
 
 const INPUT = "w-full border border-line-strong bg-paper px-3.5 py-2.5 text-sm text-ink placeholder:text-muted focus:outline-none focus:border-ink transition-colors";
 
@@ -63,6 +65,16 @@ function AccountDashboard() {
   const { api, config } = useStore();
   const [addresses, setAddresses] = useState(null);
   const [orders, setOrders] = useState(null);
+  const [openOrder, setOpenOrder] = useState(null); // order_no expanded
+  const [orderDetail, setOrderDetail] = useState({}); // order_no -> { order, items }
+
+  async function toggleOrder(o) {
+    if (openOrder === o.order_no) { setOpenOrder(null); return; }
+    setOpenOrder(o.order_no);
+    if (!orderDetail[o.order_no]) {
+      try { const r = await api.myOrder(o.order_no); setOrderDetail((d) => ({ ...d, [o.order_no]: r })); } catch { /* ignore */ }
+    }
+  }
   const [addingAddress, setAddingAddress] = useState(false);
   const [editingId, setEditingId] = useState(null); // address being edited
 
@@ -141,18 +153,58 @@ function AccountDashboard() {
           <p className="text-sm text-muted">No orders yet.</p>
         ) : (
           <div className="flex flex-col gap-2">
-            {orders.map((o) => (
-              <div key={o.id} className="border border-line bg-paper p-4 text-sm flex justify-between items-center">
-                <div>
-                  <div className="text-ink" style={{ fontWeight: 600 }}>{o.order_no}</div>
-                  <div className="text-muted text-xs mt-0.5">{new Date(o.created_at).toLocaleDateString()}</div>
+            {orders.map((o) => {
+              const unpaid = o.payment_status !== "verified";
+              const payLabel = o.payment_status === "verified" ? "Paid" : o.payment_status === "claimed" ? "Payment pending confirmation" : "Payment pending";
+              const payColor = o.payment_status === "verified" ? "#14663a" : "#8a6100";
+              const det = orderDetail[o.order_no];
+              return (
+                <div key={o.id} className="border border-line bg-paper text-sm">
+                  <div className="p-4 flex justify-between items-center gap-3 cursor-pointer" onClick={() => toggleOrder(o)}>
+                    <div>
+                      <div className="text-ink" style={{ fontWeight: 600 }}>{o.order_no}</div>
+                      <div className="text-muted text-xs mt-0.5">{new Date(o.created_at).toLocaleDateString()} · <span className="capitalize">{o.status}</span></div>
+                      <div className="text-xs mt-0.5" style={{ color: payColor }}>{payLabel}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="price text-lg text-ink">{inr(o.total)}</div>
+                      <div className="text-xs text-muted underline">{openOrder === o.order_no ? "Hide" : "View details"}</div>
+                    </div>
+                  </div>
+
+                  {openOrder === o.order_no && (
+                    <div className="px-4 pb-4 border-t border-line">
+                      {!det ? <div className="text-xs text-muted py-3">Loading…</div> : (
+                        <>
+                          <div className="flex flex-col gap-1.5 py-3">
+                            {det.items.map((it) => (
+                              <div key={it.id} className="flex justify-between text-xs text-ink-soft">
+                                <span>{it.product_name}{it.size ? ` — Size ${it.size}` : ""} × {it.qty}</span>
+                                <span className="num">{inr(it.line_total)}</span>
+                              </div>
+                            ))}
+                            <div className="flex justify-between text-sm text-ink pt-2 mt-1 border-t border-line" style={{ fontWeight: 600 }}>
+                              <span>Total</span><span className="price">{inr(det.order.total)}</span>
+                            </div>
+                          </div>
+                          <div className="text-xs text-muted">
+                            Ship to: {[det.order.address?.line1, det.order.address?.city, det.order.address?.state, det.order.address?.pincode].filter(Boolean).join(", ")}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {unpaid && config?.payment?.upi_id && (
+                    <div className="px-4 pb-4">
+                      <Link to={withStore(`/pay/${encodeURIComponent(o.order_no)}`)} className="btn btn-primary w-full">
+                        {o.payment_status === "claimed" ? "View / complete payment" : "Pay now"}
+                      </Link>
+                    </div>
+                  )}
                 </div>
-                <div className="text-right">
-                  <div className="price text-lg text-ink">{inr(o.total)}</div>
-                  <div className="text-xs capitalize text-muted">{o.status}</div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>

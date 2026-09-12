@@ -1,8 +1,9 @@
-// Full-bleed hero — the original site's signature. Priority:
-//   1. vendor hero video  (hero.video_url) — autoplay, muted, looped, like the original
-//   2. vendor hero image  (hero.image_url) — with a dark scrim + centered text
-//   3. fallback — solid brand-colour panel with the store name
-// Text (title/subtitle/CTA) overlays only when the vendor actually set them.
+// Storefront hero. Two layouts, picked by the vendor (hero.layout):
+//   "split"    — modern landing split: text + dual CTA on the left, a framed
+//                media panel on the right, on a light (paper) background.
+//   default    — the original full-bleed overlay hero (video/image + centered
+//                text), the site's signature.
+// Media priority in both: hero video → hero image → solid brand-colour panel.
 import React from "react";
 import { Link } from "react-router-dom";
 import { useStore } from "../../context/StoreContext";
@@ -20,6 +21,10 @@ export default function StoreHero() {
 
   const cta = hero.cta_text || (firstCat ? "Shop the collection" : "");
   const ctaLink = withStore(hero.cta_link || (firstCat ? `/c/${encodeURIComponent(firstCat)}` : "/"));
+
+  if (hero.layout === "split") {
+    return <SplitHero config={config} hero={hero} video={video} hasVideo={hasVideo} hasImage={hasImage} media={media} cta={cta} ctaLink={ctaLink} />;
+  }
 
   // heights mirror the original's calc(100vh - header) full-bleed feel
   const heightCls = "h-[calc(100dvh-160px)] min-h-[420px] max-h-[760px]";
@@ -95,6 +100,59 @@ export default function StoreHero() {
           </div>
         </div>
       )}
+    </section>
+  );
+}
+
+// Split landing hero: copy + dual CTA on the left, a framed media panel on the
+// right. Light background, reads as a modern product-landing header.
+function SplitHero({ config, hero, video, hasVideo, hasImage, media, cta, ctaLink }) {
+  const title = hero.title || config?.store_name || "Welcome";
+  const firstCat = config?.categories?.[0];
+  const browseLink = withStore(firstCat ? `/c/all` : "/");
+
+  return (
+    <section className="relative w-full overflow-hidden" style={{ background: "var(--color-paper, #fff)" }}>
+      <div className="container mx-auto px-4 lg:px-6 py-14 md:py-20">
+        <div className="grid grid-cols-1 xl:grid-cols-5 gap-10 xl:gap-16 items-center">
+          {/* copy */}
+          <div className="reveal xl:col-span-2">
+            <div className="eyebrow mb-4" style={{ color: "var(--store-primary, #1a1512)", opacity: 0.85 }}>
+              {config?.store_name || "Collection"}
+            </div>
+            <h1 className="text-4xl md:text-5xl leading-[1.05] mb-5 text-ink" style={{ textWrap: "balance", fontWeight: 440 }}>
+              {title}
+            </h1>
+            {hero.subtitle && (
+              <p className="text-base md:text-lg text-ink-soft font-light leading-relaxed mb-8 max-w-xl" style={{ textWrap: "pretty" }}>
+                {hero.subtitle}
+              </p>
+            )}
+            <div className="flex flex-col sm:flex-row gap-3">
+              {cta && <Link to={ctaLink} className="btn btn-primary">{cta}</Link>}
+              <Link to={browseLink} className="btn btn-outline">Browse catalogue</Link>
+            </div>
+          </div>
+
+          {/* framed media */}
+          <div className="reveal xl:col-span-3">
+            <div className="w-full aspect-video rounded-xl overflow-hidden border border-line bg-panel" style={{ background: media ? undefined : "var(--store-primary, #1a1512)" }}>
+              {hasVideo && video.kind === "file" && (
+                <video autoPlay loop muted playsInline poster={hero.image_url || undefined} className="w-full h-full object-cover">
+                  <source src={video.src} />
+                </video>
+              )}
+              {hasVideo && video.kind === "embed" && (
+                <iframe src={video.src} title="" aria-hidden="true" tabIndex={-1} allow="autoplay; encrypted-media; picture-in-picture" frameBorder="0"
+                  className="w-full h-full pointer-events-none" style={{ border: "none" }} />
+              )}
+              {!hasVideo && hasImage && (
+                <img src={hero.image_url} alt={config?.store_name || ""} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }

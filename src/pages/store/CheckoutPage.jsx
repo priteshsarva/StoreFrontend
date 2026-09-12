@@ -6,7 +6,8 @@ import { useCart } from "../../context/CartContext";
 import { inr } from "../../lib/money";
 import { withStore } from "../../lib/tenant";
 import { useCustomerAuth } from "../../context/CustomerAuthContext";
-import { setPending } from "../../lib/pendingPay";
+import { setPending, markPurchaseTracked, isPurchaseTracked } from "../../lib/pendingPay";
+import { ecom, toItem } from "../../lib/analytics";
 
 const INPUT = "w-full border border-line-strong bg-paper px-3.5 py-2.5 text-sm text-ink placeholder:text-muted focus:outline-none focus:border-ink transition-colors";
 
@@ -41,7 +42,10 @@ export default function CheckoutPage() {
     }
   }, [customer]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => { api.track("begin_checkout", { value: total }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    api.track("begin_checkout", { value: total });
+    if (lineItems.length) ecom("begin_checkout", { items: lineItems.map((it) => toItem(it, it.qty)), value: total });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!booted) return null;
   if (!result && lineItems.length === 0) {
@@ -75,15 +79,24 @@ export default function CheckoutPage() {
       // Store collects by UPI → go to the payment PAGE (no popup). Saved so a
       // refresh / return from the UPI app restores it; cleared once the buyer
       // claims payment (taps WhatsApp) so it never nags again.
+      const items = lineItems.map((it) => toItem(it, it.qty));
       if (hasUpi) {
+        // purchase fires later, on payment-confirmed (PaymentPage.onClaim) — stash
+        // the items so the pixel has them then.
         setPending({
           slug: config.slug, orderNo: r.order_no, total: r.total,
           storeName: config.store_name, upiId: pay.upi_id, upiName: pay.upi_name, whatsapp: pay.whatsapp,
+          items,
         });
         navigate(withStore(`/pay/${encodeURIComponent(r.order_no)}`));
         return;
       }
-      setResult(r); // no UPI configured → WhatsApp-only confirmation
+      // No UPI configured → the order IS the conversion (WhatsApp confirmation).
+      if (!isPurchaseTracked(config.slug, r.order_no)) {
+        ecom("purchase", { items, value: r.total, transaction_id: r.order_no });
+        markPurchaseTracked(config.slug, r.order_no);
+      }
+      setResult(r);
     } catch (err) {
       setError(err.message);
     } finally {

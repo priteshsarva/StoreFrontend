@@ -10,7 +10,8 @@ import { useParams, Link } from "react-router-dom";
 import { Check } from "lucide-react";
 import { useStore } from "../../context/StoreContext";
 import { withStore } from "../../lib/tenant";
-import { getPending, clearPending, markClaimed } from "../../lib/pendingPay";
+import { getPending, clearPending, markClaimed, markPurchaseTracked, isPurchaseTracked } from "../../lib/pendingPay";
+import { ecom } from "../../lib/analytics";
 import { inr } from "../../lib/money";
 import UpiPayCard from "../../components/store/UpiPayCard";
 
@@ -53,6 +54,12 @@ export default function PaymentPage() {
     setClaimed(true);
     markClaimed(config?.slug);
     api.claimPayment(orderNo).catch(() => {});
+    // Conversion fires only now — payment confirmed by the buyer. Once per order.
+    if (!isPurchaseTracked(config?.slug, orderNo)) {
+      ecom("purchase", { items: base?.items || [], value: total, transaction_id: orderNo });
+      api.track && api.track("purchase", { value: total });
+      markPurchaseTracked(config?.slug, orderNo);
+    }
   }
 
   if (!pay && !srv) {

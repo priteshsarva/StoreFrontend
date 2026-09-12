@@ -1,6 +1,7 @@
 // localStorage cart, keyed per vendor slug so carts never leak between stores.
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useStore } from "./StoreContext";
+import { ecom, toItem } from "../lib/analytics";
 
 const CartCtx = createContext(null);
 
@@ -19,6 +20,7 @@ export function CartProvider({ children }) {
   // ride on that field — checkout folds it into the order's free-text note instead.
   function add(product, qty = 1, size = "") {
     api?.track("add_to_cart", { product_id: product.productId, db_name: product.dbName, value: product.price });
+    ecom("add_to_cart", { items: [toItem(product, qty)], value: (Number(product.price) || 0) * qty });
     setItems((prev) => {
       const i = prev.findIndex((x) => x.product_id === product.productId && x.db_name === product.dbName && x.size === size);
       if (i >= 0) {

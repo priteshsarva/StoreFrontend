@@ -33,6 +33,14 @@ export function markClaimed(slug) {
   } catch { /* ignore */ }
 }
 
+// Fire the purchase pixel at most once per order (survives refresh/return).
+export function markPurchaseTracked(slug, orderNo) {
+  try { localStorage.setItem(`spp_purch:${slug || resolveSlug()}:${orderNo}`, "1"); } catch { /* ignore */ }
+}
+export function isPurchaseTracked(slug, orderNo) {
+  try { return localStorage.getItem(`spp_purch:${slug || resolveSlug()}:${orderNo}`) === "1"; } catch { return false; }
+}
+
 // upi://pay deep link — opens the phone's UPI app chooser (GPay/PhonePe/Paytm)
 // with amount + order reference pre-filled. Same string powers the QR.
 export function upiLink({ upiId, upiName, storeName, total, orderNo }) {

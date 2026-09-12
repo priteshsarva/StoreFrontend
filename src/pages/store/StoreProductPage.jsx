@@ -7,6 +7,7 @@ import { inr } from "../../lib/money";
 import { useWishlist } from "../../context/WishlistContext";
 import { withStore } from "../../lib/tenant";
 import { useAutoRefresh } from "../../lib/useAutoRefresh";
+import { ecom, toItem } from "../../lib/analytics";
 import ProductRail from "../../components/store/ProductRail";
 import SectionHeading from "../../components/store/SectionHeading";
 
@@ -31,6 +32,7 @@ export default function StoreProductPage() {
       if (cancelled) return;
       setData(d);
       api.track("view_item", { product_id: d?.product?.productId, db_name: d?.product?.dbName, value: d?.product?.price });
+      if (d?.product) ecom("view_item", { items: [toItem(d.product)], value: d.product.price });
     }).catch((e) => { if (!cancelled) setError(e); });
 
     // Trigger a live re-scrape of this product on the backend (like the original

@@ -2,7 +2,6 @@
 // reviews / testimonials) in the portal; they scroll continuously here. Pauses
 // on hover, loops seamlessly by duplicating the track.
 import React from "react";
-import SectionHeading from "./SectionHeading";
 
 export default function ReviewsSlider({ images }) {
   const imgs = (Array.isArray(images) ? images : []).map((s) => String(s || "").trim()).filter(Boolean);
@@ -13,7 +12,13 @@ export default function ReviewsSlider({ images }) {
 
   return (
     <section className="py-4">
-      <SectionHeading eyebrow="Loved by">What our customers say</SectionHeading>
+      {/* explicit on-background colour so the heading always contrasts the
+          store's chosen background (text-ink can wash out on some palettes) */}
+      <div className="container mx-auto px-4 pt-14 pb-6 text-center reveal" style={{ color: "var(--store-on-bg, #1a1512)" }}>
+        <div className="eyebrow mb-3" style={{ opacity: 0.7 }}>Loved by</div>
+        <h2 className="text-2xl md:text-[2rem] font-normal leading-tight">What our customers say</h2>
+        <span className="mt-4 inline-block h-px w-12" style={{ background: "var(--store-primary, #1a1512)" }} />
+      </div>
       <div className="reviews-marquee group relative overflow-hidden mt-2">
         <div
           className="flex gap-5 w-max px-4 reviews-track"

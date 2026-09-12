@@ -39,6 +39,18 @@ export default function PendingPayModal() {
             <div style={{ fontWeight: 700, fontSize: 16 }}>Complete your payment</div>
             <div style={{ fontSize: 12.5, color: "var(--color-muted,#6b7688)", marginTop: 3 }}>Order {pending.orderNo} isn't confirmed until payment is done.</div>
           </div>
+          {Array.isArray(pending.lines) && pending.lines.length > 0 && (
+            <div style={{ display: "flex", gap: 8, overflowX: "auto", padding: "12px 16px 0" }}>
+              {pending.lines.map((l, i) => (
+                <div key={i} style={{ flex: "0 0 auto", width: 56, textAlign: "center" }}>
+                  <div style={{ width: 56, height: 56, borderRadius: 8, overflow: "hidden", background: "var(--color-panel,#f4f5f8)", border: "1px solid var(--color-line,#e6e9f0)" }}>
+                    {l.image ? <img src={l.image} alt={l.name || ""} referrerPolicy="no-referrer" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : null}
+                  </div>
+                  <div style={{ fontSize: 10, color: "var(--color-muted,#6b7688)", marginTop: 2 }}>×{l.qty}</div>
+                </div>
+              ))}
+            </div>
+          )}
           <UpiPayCard pay={pay} utr={utr} onUtr={setUtr} onWhatsApp={onWhatsApp} />
           <div style={{ textAlign: "center", padding: "0 16px 14px" }}>
             <Link to={withStore(`/pay/${encodeURIComponent(pending.orderNo)}`)} onClick={() => setClosed(true)} style={{ fontSize: 12.5, color: "var(--color-muted,#6b7688)", textDecoration: "underline" }}>Open the full payment page</Link>

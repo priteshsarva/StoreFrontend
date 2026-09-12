@@ -95,6 +95,7 @@ export default function CheckoutPage() {
           slug: config.slug, orderNo: r.order_no, total: r.total,
           storeName: config.store_name, upiId: pay.upi_id, upiName: pay.upi_name, whatsapp: pay.whatsapp,
           items,
+          lines: lineItems.map((it) => ({ name: it.name, image: it.image, qty: it.qty, price: it.price })),
         });
         navigate(withStore(`/pay/${encodeURIComponent(r.order_no)}`));
         return;

@@ -21,6 +21,7 @@ import CartPage from './pages/store/CartPage.jsx';
 import CheckoutPage from './pages/store/CheckoutPage.jsx';
 import PaymentPage from './pages/store/PaymentPage.jsx';
 import PendingPayBanner from './components/store/PendingPayBanner.jsx';
+import PendingPayModal from './components/store/PendingPayModal.jsx';
 import AccountPage from './pages/store/AccountPage.jsx';
 import PolicyPage from './pages/store/PolicyPage.jsx';
 import FaqPage from './pages/store/FaqPage.jsx';
@@ -137,6 +138,7 @@ function AppShell() {
           <div style={{ position: 'relative', zIndex: 1, background: 'var(--color-paper, #ffffff)', marginBottom: footerH }}>
             <StoreNavBar />
             <PendingPayBanner />
+            <PendingPayModal />
             <Routes>
               <Route path="/" element={<StoreHome />} />
               <Route path="/c/:category" element={<StoreCategoryPage />} />

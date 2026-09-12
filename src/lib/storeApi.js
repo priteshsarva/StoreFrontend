@@ -135,6 +135,8 @@ export const storeApi = (slug) => ({
   // Buyer marks an order paid (tapped WhatsApp) — flips it to 'claimed' so the
   // pay page stops prompting; the vendor/admin verifies for real later.
   claimPayment: (orderNo) => req(slug, `/orders/${encodeURIComponent(orderNo)}/claim`, { method: "POST" }),
+  payStart: (orderNo) => req(slug, `/orders/${encodeURIComponent(orderNo)}/pay-start`, { method: "POST" }),
+  payVerify: (orderNo) => req(slug, `/orders/${encodeURIComponent(orderNo)}/pay-verify`),
   myOrders: () => req(slug, "/me/orders", { auth: true }),
   myOrder: (orderNo) => req(slug, `/me/orders/${orderNo}`, { auth: true }),
 });

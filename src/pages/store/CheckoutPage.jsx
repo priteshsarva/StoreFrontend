@@ -80,6 +80,14 @@ export default function CheckoutPage() {
       // refresh / return from the UPI app restores it; cleared once the buyer
       // claims payment (taps WhatsApp) so it never nags again.
       const items = lineItems.map((it) => toItem(it, it.qty));
+      // Pay0 (automated gateway): redirect to the hosted payment page; the order
+      // is confirmed by the server callback, not by the buyer.
+      if (pay?.method === "pay0") {
+        try {
+          const g = await api.payStart(r.order_no);
+          if (g.payment_url) { if (!quickItem) clear(); window.location.href = g.payment_url; return; }
+        } catch (e) { /* fall back to UPI/WhatsApp below */ }
+      }
       if (hasUpi) {
         // purchase fires later, on payment-confirmed (PaymentPage.onClaim) — stash
         // the items so the pixel has them then.

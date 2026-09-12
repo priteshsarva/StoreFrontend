@@ -26,13 +26,15 @@ export default function PaymentPage() {
   // Pull the order from the server when the buyer is logged in — gives us the
   // real amount + payment status even with no saved pending payment.
   useEffect(() => {
-    api.myOrder(orderNo).then((r) => {
+    // Returning from the Pay0 gateway: confirm server-side first (the redirect
+    // callback usually already did, this is a safety net), then load the order.
+    const load = () => api.myOrder(orderNo).then((r) => {
       setSrv(r.order || null);
-      // If it's already paid, drop the saved payment so the "Finish paying"
-      // banner stops showing for a completed order.
       if (r.order && (r.order.payment_status === "verified" || ["processing", "completed"].includes(r.order.status))) clearPending(config?.slug);
     }).catch(() => setSrv(null));
-  }, [orderNo]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (config?.payment?.method === "pay0") api.payVerify(orderNo).catch(() => {}).then(load);
+    else load();
+  }, [orderNo, config?.payment?.method]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const payCfg = config?.payment || {};
   const base = pending && pending.orderNo === orderNo ? pending : null;

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useStore } from "../../context/StoreContext";
-import { useCustomerAuth } from "../../context/CustomerAuthContext";
+import { useCustomerAuth, PORTAL_URL } from "../../context/CustomerAuthContext";
 import { inr } from "../../lib/money";
 import { withStore } from "../../lib/tenant";
 
@@ -21,18 +21,32 @@ function AuthForm({ login, signup }) {
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  const [portalPrompt, setPortalPrompt] = useState(false);
 
   async function submit(e) {
     e.preventDefault();
     setBusy(true); setError(null);
     try {
-      if (mode === "login") await login(email, password);
-      else await signup({ email, password, name, phone });
+      if (mode === "login") {
+        const r = await login(email, password);
+        if (r?.redirect_to_portal) { setPortalPrompt(true); return; }
+      } else await signup({ email, password, name, phone });
     } catch (err) {
       setError(err.message);
     } finally {
       setBusy(false);
     }
+  }
+
+  if (portalPrompt) {
+    return (
+      <div className="max-w-sm mx-auto px-4 py-20 text-center">
+        <h1 className="text-2xl mb-3 text-ink">That's a store-owner account</h1>
+        <p className="text-sm text-muted mb-6">These are your portal credentials — manage this store from the portal, not the storefront.</p>
+        <a href={PORTAL_URL} className="btn btn-primary w-full">Go to portal</a>
+        <button onClick={() => { setPortalPrompt(false); setPassword(""); }} className="mt-5 text-sm text-muted hover:text-ink underline block mx-auto transition-colors">Back to sign in</button>
+      </div>
+    );
   }
 
   return (

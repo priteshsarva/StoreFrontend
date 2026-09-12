@@ -6,6 +6,8 @@ import { getCustomerToken, setCustomerToken } from "../lib/storeApi";
 
 const AuthCtx = createContext(null);
 
+export const PORTAL_URL = import.meta.env.VITE_PORTAL_URL || "http://localhost:5174";
+
 export function CustomerAuthProvider({ children }) {
   const { slug, api } = useStore();
   const [customer, setCustomer] = useState(null);
@@ -21,13 +23,12 @@ export function CustomerAuthProvider({ children }) {
 
   async function login(email, password) {
     const r = await api.login({ email, password });
-    // Store owner/admin used their portal credentials — send them to the portal.
-    if (r.redirect_to_portal) {
-      window.location.href = import.meta.env.VITE_PORTAL_URL || "http://localhost:5174";
-      return;
-    }
+    // Store owner/admin used their portal credentials — don't auto-redirect;
+    // hand the signal back so the caller can offer a "Go to portal" button.
+    if (r.redirect_to_portal) return r;
     setCustomerToken(slug, r.token);
     setCustomer(r.customer);
+    return r;
   }
   async function signup(body) {
     const r = await api.signup(body);

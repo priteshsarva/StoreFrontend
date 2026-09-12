@@ -108,10 +108,24 @@ export function StoreProvider({ children }) {
   // replaces the storefront (kept inside the provider so useStore() never nulls).
   const gated = status === "ready" && config?.preview_required;
 
+  // Owner's layout-preview link carries ?preview_pw=… → unlock automatically so
+  // the preview never asks the owner for the password. Public visitors (no param)
+  // still hit the gate; a wrong/expired param falls back to the manual gate.
+  const readPw = () => { try { return new URLSearchParams(window.location.search).get("preview_pw"); } catch { return null; } };
+  const [autoUnlocking, setAutoUnlocking] = useState(() => !!readPw());
+  const autoTried = React.useRef(false);
+  useEffect(() => {
+    if (!gated || autoTried.current) return;
+    const pw = readPw();
+    if (!pw) { setAutoUnlocking(false); return; }
+    autoTried.current = true;
+    api.previewUnlock(pw).then(loadConfig).catch(() => setAutoUnlocking(false));
+  }, [gated]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <StoreCtx.Provider value={{ slug, config, status, api }}>
       {gated
-        ? <PreviewGate api={api} config={config} onUnlock={loadConfig} />
+        ? (autoUnlocking ? null : <PreviewGate api={api} config={config} onUnlock={loadConfig} />)
         : <>{config?.preview && <PreviewBanner />}{children}</>}
     </StoreCtx.Provider>
   );

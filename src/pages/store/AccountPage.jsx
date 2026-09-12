@@ -57,12 +57,12 @@ function AuthForm({ login, signup }) {
       <form onSubmit={submit} className="flex flex-col gap-3">
         {mode === "signup" && (
           <>
-            <input placeholder="Name" className={INPUT} value={name} onChange={(e) => setName(e.target.value)} />
-            <input placeholder="Phone" type="tel" className={INPUT} value={phone} onChange={(e) => setPhone(e.target.value)} />
+            <input placeholder="Name" autoComplete="name" className={INPUT} value={name} onChange={(e) => setName(e.target.value)} />
+            <input placeholder="Phone" type="tel" autoComplete="tel" className={INPUT} value={phone} onChange={(e) => setPhone(e.target.value)} />
           </>
         )}
-        <input required type="email" placeholder="Email" className={INPUT} value={email} onChange={(e) => setEmail(e.target.value)} />
-        <input required type="password" placeholder="Password" className={INPUT} value={password} onChange={(e) => setPassword(e.target.value)} />
+        <input required type="email" autoComplete={mode === "signup" ? "email" : "username"} placeholder="Email" className={INPUT} value={email} onChange={(e) => setEmail(e.target.value)} />
+        <input required type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} placeholder="Password" className={INPUT} value={password} onChange={(e) => setPassword(e.target.value)} />
         <button type="submit" disabled={busy} className="btn btn-primary w-full mt-2">
           {busy ? "Please wait…" : mode === "login" ? "Sign in" : "Create account"}
         </button>

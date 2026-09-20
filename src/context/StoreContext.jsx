@@ -77,7 +77,11 @@ export function StoreProvider({ children }) {
     // palette_mode "default" = ignore the vendor's brand colours and let the
     // chosen layout use its own built-in palette (the --store-* vars stay unset,
     // so every var(--store-*, <layout default>) falls back to the default).
-    if (config?.theme && config.theme.palette_mode !== "default") applyTheme(config.theme);
+    // ?palette=default|brand overrides it WITHOUT persisting — powers the portal's
+    // layout gallery so each layout shows its own default colours in the demo.
+    let paletteMode = config?.theme?.palette_mode;
+    try { const o = new URLSearchParams(window.location.search).get("palette"); if (o === "default" || o === "brand") paletteMode = o; } catch { /* ignore */ }
+    if (config?.theme && paletteMode !== "default") applyTheme(config.theme);
     if (config?.store_name) {
       document.title = config.store_name;
     }

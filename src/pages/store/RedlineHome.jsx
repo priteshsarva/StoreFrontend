@@ -19,21 +19,21 @@ const keyOf = (p) => `${p.dbName}-${p.productId}`;
 function Tile({ p }) {
   return (
     <Link to={withStore(`/p/${p.dbName}/${p.productId}`)} {...newTab} className="group block">
-      <div className="relative overflow-hidden bg-[#f7f7f7] border border-[#eee]" style={{ aspectRatio: "4/5" }}>
+      <div className="relative overflow-hidden bg-[var(--color-panel)] border border-[var(--color-line)]" style={{ aspectRatio: "4/5" }}>
         {p.thumbnail
           ? <img src={p.thumbnail} alt={p.productName} loading="lazy" className="w-full h-full object-cover transition duration-500 ease-out group-hover:scale-[1.05]" />
           : <div className="w-full h-full" />}
         {p.savings_pct > 0 && (
-          <span className="absolute top-2 left-2 text-[10px] font-bold tracking-wide px-2 py-0.5 text-white" style={{ background: "#F0442E" }}>-{p.savings_pct}%</span>
+          <span className="absolute top-2 left-2 text-[10px] font-bold tracking-wide px-2 py-0.5 text-white" style={{ background: "var(--store-primary)" }}>-{p.savings_pct}%</span>
         )}
-        {!p.inStock && <span className="absolute top-2 right-2 bg-black/75 text-white text-[9px] uppercase tracking-[0.1em] px-2 py-0.5">Sold out</span>}
+        {!p.inStock && <span className="absolute top-2 right-2 bg-[var(--store-secondary)]/75 text-white text-[9px] uppercase tracking-[0.1em] px-2 py-0.5">Sold out</span>}
       </div>
       <div className="pt-2.5">
-        {p.productBrand && <div className="text-[10px] uppercase tracking-[0.14em] text-[#B8B8B8] truncate">{p.productBrand}</div>}
-        <div className="text-[12.5px] text-[#080808] leading-snug line-clamp-1 mt-0.5 font-medium">{p.productName}</div>
+        {p.productBrand && <div className="text-[10px] uppercase tracking-[0.14em] text-[var(--color-muted)] truncate">{p.productBrand}</div>}
+        <div className="text-[12.5px] text-[var(--color-ink)] leading-snug line-clamp-1 mt-0.5 font-medium">{p.productName}</div>
         <div className="flex items-baseline gap-2 mt-1">
-          {p.mrp > p.price && <span className="text-[11px] text-[#B8B8B8] line-through num">{inr(p.mrp)}</span>}
-          <span className="text-[13.5px] font-bold num" style={{ color: p.mrp > p.price ? "#F0442E" : "#080808" }}>{inr(p.price)}</span>
+          {p.mrp > p.price && <span className="text-[11px] text-[var(--color-muted)] line-through num">{inr(p.mrp)}</span>}
+          <span className="text-[13.5px] font-bold num" style={{ color: p.mrp > p.price ? "var(--store-primary)" : "var(--color-ink)" }}>{inr(p.price)}</span>
         </div>
       </div>
     </Link>
@@ -99,15 +99,15 @@ export default function RedlineHome() {
   const slide = (dir) => { const el = railRef.current; if (el) el.scrollBy({ left: dir * Math.round(el.clientWidth * 0.85), behavior: "smooth" }); };
 
   return (
-    <div className="redline bg-white text-[#080808]">
+    <div className="redline bg-[var(--store-bg)] text-[var(--color-ink)]">
       {/* ---------------- HERO ---------------- */}
-      <section className="relative w-full overflow-hidden bg-[#080808]" style={{ minHeight: "82vh" }}>
+      <section className="relative w-full overflow-hidden bg-[var(--store-secondary)]" style={{ minHeight: "82vh" }}>
         {heroImg && <img src={heroImg} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90" />}
         <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(8,8,8,0.85), rgba(8,8,8,0.35) 55%, rgba(8,8,8,0.15))" }} />
         <div className="relative z-10 flex flex-col justify-center min-h-[82vh] px-6 md:px-14 max-w-[1440px] mx-auto">
-          <div className="r-eyebrow text-[#F0442E]">Built for performance</div>
+          <div className="r-eyebrow text-[var(--store-primary)]">Built for the bold</div>
           <h1 className="r-display text-white text-[42px] md:text-[80px] leading-[0.92] max-w-[16ch] mt-3">{hero.title || storeName || "Custom Wide Body"}</h1>
-          <p className="text-[#B8B8B8] mt-4 max-w-[46ch] text-sm md:text-base">{hero.subtitle || "Designed to dominate. Precision-engineered parts and accessories for serious builds."}</p>
+          <p className="text-[var(--color-muted)] mt-4 max-w-[46ch] text-sm md:text-base">{hero.subtitle || "Designed to dominate. Standout pieces for people who want more."}</p>
           <div className="mt-8 flex items-center gap-4 flex-wrap">
             {heroProduct
               ? <Link to={pdp(heroProduct)} {...newTab} className="r-btn">Buy this now</Link>
@@ -119,11 +119,11 @@ export default function RedlineHome() {
 
       {/* ---------------- CATEGORY STRIP ---------------- */}
       {cats.length > 0 && (
-        <section className="border-b border-[#eee] bg-white">
+        <section className="border-b border-[var(--color-line)] bg-[var(--store-bg)]">
           <div className="max-w-[1440px] mx-auto px-4 md:px-10 flex gap-2 overflow-x-auto r-scroll py-4">
             {cats.map((c) => (
               <Link key={c} to={withStore(`/c/${encodeURIComponent(c)}`)}
-                className="flex-none uppercase text-[11px] tracking-[0.12em] font-semibold px-4 py-2 border border-[#ddd] hover:border-[#080808] hover:bg-[#080808] hover:text-white transition-colors">
+                className="flex-none uppercase text-[11px] tracking-[0.12em] font-semibold px-4 py-2 border border-[var(--color-line)] hover:border-[var(--color-ink)] hover:bg-[var(--store-secondary)] hover:text-white transition-colors">
                 {cap(c)}
               </Link>
             ))}
@@ -133,9 +133,9 @@ export default function RedlineHome() {
 
       {/* ---------------- FEATURED CATEGORY TILES ---------------- */}
       {featured.length > 0 && (
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-[2px] bg-white">
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-[2px] bg-[var(--store-bg)]">
           {featured.map((t) => (
-            <Link key={t.cat} to={withStore(`/c/${encodeURIComponent(t.cat)}`)} className="group relative block overflow-hidden bg-[#080808]" style={{ aspectRatio: "1/1" }}>
+            <Link key={t.cat} to={withStore(`/c/${encodeURIComponent(t.cat)}`)} className="group relative block overflow-hidden bg-[var(--store-secondary)]" style={{ aspectRatio: "1/1" }}>
               <img src={t.img} alt={t.cat} className="absolute inset-0 w-full h-full object-cover opacity-80 transition duration-500 group-hover:scale-105 group-hover:opacity-95" />
               <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(8,8,8,0.8), transparent 55%)" }} />
               <div className="absolute inset-x-0 bottom-0 p-6">
@@ -151,8 +151,8 @@ export default function RedlineHome() {
       {flash.length > 0 && (
         <section className="max-w-[1440px] mx-auto px-6 md:px-14 pt-[50px] md:pt-[70px]">
           <div className="text-center mb-8">
-            <h2 className="r-display text-[26px] md:text-[38px] uppercase" style={{ color: "#F0442E" }}>Flash Sale</h2>
-            <div className="text-[12px] uppercase tracking-[0.18em] text-[#6f6f6f] mt-1">Save big on performance essentials</div>
+            <h2 className="r-display text-[26px] md:text-[38px] uppercase" style={{ color: "var(--store-primary)" }}>Flash Sale</h2>
+            <div className="text-[12px] uppercase tracking-[0.18em] text-[var(--color-muted)] mt-1">Save big on this season's picks</div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-x-3 gap-y-8 md:gap-x-5">
             {flash.map((p) => <Tile key={keyOf(p)} p={p} />)}
@@ -166,7 +166,7 @@ export default function RedlineHome() {
           <h2 className="r-display text-[22px] md:text-[32px] uppercase text-center mb-8">Top Categories</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
             {topCats.map((t) => (
-              <Link key={t.cat} to={withStore(`/c/${encodeURIComponent(t.cat)}`)} className="group relative block overflow-hidden bg-[#080808]" style={{ aspectRatio: "16/10" }}>
+              <Link key={t.cat} to={withStore(`/c/${encodeURIComponent(t.cat)}`)} className="group relative block overflow-hidden bg-[var(--store-secondary)]" style={{ aspectRatio: "16/10" }}>
                 <img src={t.img} alt={t.cat} className="absolute inset-0 w-full h-full object-cover opacity-80 transition duration-500 group-hover:scale-105" />
                 <div className="absolute inset-0 flex items-center justify-center" style={{ background: "rgba(8,8,8,0.35)" }}>
                   <span className="r-display text-white text-lg md:text-2xl uppercase">{cap(t.cat)}</span>
@@ -178,11 +178,11 @@ export default function RedlineHome() {
       )}
 
       {/* ---------------- BENEFITS STRIP ---------------- */}
-      <section className="mt-[50px] md:mt-[70px] bg-[#f7f7f7] border-y border-[#eee]">
+      <section className="mt-[50px] md:mt-[70px] bg-[var(--color-panel)] border-y border-[var(--color-line)]">
         <div className="max-w-[1440px] mx-auto px-6 md:px-14 py-6 grid grid-cols-2 md:grid-cols-4 gap-6">
           {BENEFITS.map(({ Icon, label }) => (
             <div key={label} className="flex items-center gap-3">
-              <Icon size={22} className="shrink-0" style={{ color: "#080808" }} strokeWidth={1.6} />
+              <Icon size={22} className="shrink-0" style={{ color: "var(--color-ink)" }} strokeWidth={1.6} />
               <span className="text-[12px] md:text-[13px] uppercase tracking-[0.08em] font-semibold">{label}</span>
             </div>
           ))}
@@ -194,7 +194,7 @@ export default function RedlineHome() {
         <section className="max-w-[1440px] mx-auto px-6 md:px-14 pt-[50px] md:pt-[80px]">
           <div className="text-center mb-8">
             <h2 className="r-display text-[22px] md:text-[32px] uppercase">Most Popular</h2>
-            <div className="text-[12px] uppercase tracking-[0.16em] text-[#6f6f6f] mt-1">Upgrade your drive with our best sellers</div>
+            <div className="text-[12px] uppercase tracking-[0.16em] text-[var(--color-muted)] mt-1">Shop our best sellers</div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-x-3 gap-y-8 md:gap-x-5">
             {popular.map((p) => <Tile key={keyOf(p)} p={p} />)}
@@ -204,14 +204,14 @@ export default function RedlineHome() {
 
       {/* ---------------- RED PERFORMANCE BANNER ---------------- */}
       {bannerA && (
-        <section className="relative w-full mt-[50px] md:mt-[80px] overflow-hidden" style={{ height: "56vh", minHeight: 320, background: "#F0442E" }}>
+        <section className="relative w-full mt-[50px] md:mt-[80px] overflow-hidden" style={{ height: "56vh", minHeight: 320, background: "var(--store-primary)" }}>
           <img src={bannerA.thumbnail} alt="" className="absolute inset-0 w-full h-full object-cover opacity-45" />
           <div className="absolute inset-0" style={{ background: "linear-gradient(90deg, rgba(240,68,46,0.92), rgba(8,8,8,0.4))" }} />
           <div className="relative z-10 h-full flex flex-col justify-center px-6 md:px-14 max-w-[1440px] mx-auto">
-            <h2 className="r-display text-white text-[30px] md:text-[56px] uppercase leading-[0.95] max-w-[14ch]">Built for speed. Designed for the street.</h2>
+            <h2 className="r-display text-white text-[30px] md:text-[56px] uppercase leading-[0.95] max-w-[14ch]">Built to stand out.</h2>
             <div className="mt-6 flex items-center gap-4 flex-wrap">
               <Link to={pdp(bannerA)} {...newTab} className="r-btn-dark">Buy this now</Link>
-              <Link to={shopAll} className="r-btn-ghost-light">Shop performance</Link>
+              <Link to={shopAll} className="r-btn-ghost-light">Shop now</Link>
             </div>
           </div>
         </section>
@@ -221,18 +221,18 @@ export default function RedlineHome() {
       {interior.length > 0 && (
         <section className="max-w-[1440px] mx-auto px-6 md:px-14 pt-[50px] md:pt-[80px]">
           <div className="flex items-end justify-between mb-8">
-            <h2 className="r-display text-[22px] md:text-[32px] uppercase">Featured Gear</h2>
+            <h2 className="r-display text-[22px] md:text-[32px] uppercase">Featured</h2>
             <div className="flex items-center gap-3">
-              <button onClick={() => slide(-1)} aria-label="Previous" className="w-9 h-9 border border-[#ddd] flex items-center justify-center hover:bg-[#080808] hover:text-white transition-colors">‹</button>
-              <button onClick={() => slide(1)} aria-label="Next" className="w-9 h-9 border border-[#ddd] flex items-center justify-center hover:bg-[#080808] hover:text-white transition-colors">›</button>
+              <button onClick={() => slide(-1)} aria-label="Previous" className="w-9 h-9 border border-[var(--color-line)] flex items-center justify-center hover:bg-[var(--store-secondary)] hover:text-white transition-colors">‹</button>
+              <button onClick={() => slide(1)} aria-label="Next" className="w-9 h-9 border border-[var(--color-line)] flex items-center justify-center hover:bg-[var(--store-secondary)] hover:text-white transition-colors">›</button>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-[minmax(0,300px)_1fr] gap-6">
             {bannerB && (
-              <Link to={pdp(bannerB)} {...newTab} className="group relative block overflow-hidden bg-[#080808]" style={{ aspectRatio: "3/4" }}>
+              <Link to={pdp(bannerB)} {...newTab} className="group relative block overflow-hidden bg-[var(--store-secondary)]" style={{ aspectRatio: "3/4" }}>
                 <img src={bannerB.thumbnail} alt="" className="absolute inset-0 w-full h-full object-cover opacity-90 transition duration-500 group-hover:scale-105" />
                 <div className="absolute inset-x-0 bottom-0 p-5" style={{ background: "linear-gradient(to top, rgba(8,8,8,0.85), transparent)" }}>
-                  <div className="r-display text-white text-xl uppercase">Shop the build</div>
+                  <div className="r-display text-white text-xl uppercase">Shop now</div>
                   <span className="inline-flex items-center gap-1 text-[11px] uppercase tracking-[0.12em] text-white mt-2">Explore <ArrowRight size={13} /></span>
                 </div>
               </Link>
@@ -247,13 +247,13 @@ export default function RedlineHome() {
       )}
 
       {/* ---------------- REVIEWS ---------------- */}
-      <section className="mt-[50px] md:mt-[80px] py-[50px] md:py-[70px] bg-[#f7f7f7] border-t border-[#eee]">
+      <section className="mt-[50px] md:mt-[80px] py-[50px] md:py-[70px] bg-[var(--color-panel)] border-t border-[var(--color-line)]">
         <h2 className="r-display text-[22px] md:text-[32px] uppercase text-center mb-8">Top Reviews</h2>
         {Array.isArray(config?.reviews) && config.reviews.length
           ? <div className="max-w-[1100px] mx-auto px-4"><ReviewsSlider images={config.reviews} /></div>
           : (
             <div className="max-w-[760px] mx-auto text-center px-6">
-              <div className="tracking-[0.3em]" style={{ color: "#F0442E" }}>★★★★★</div>
+              <div className="tracking-[0.3em]" style={{ color: "var(--store-primary)" }}>★★★★★</div>
               <p className="text-[18px] md:text-[22px] leading-relaxed mt-4">“Perfect fit and finish. The upgrade looks incredible — quality is obvious. Highly recommend.”</p>
               <div className="mt-5 text-[13px] uppercase tracking-[0.16em] font-semibold">{storeName || "A happy customer"}</div>
             </div>
@@ -269,9 +269,9 @@ export default function RedlineHome() {
         .redline .num { font-variant-numeric: tabular-nums; }
         .redline .r-scroll { scrollbar-width: none; }
         .redline .r-scroll::-webkit-scrollbar { display: none; }
-        .redline .r-btn { display:inline-block; background:#F0442E; color:#fff; text-transform:uppercase; font-size:12px; letter-spacing:0.1em; font-weight:700; padding:13px 26px; border-radius:2px; transition:filter .15s, transform .15s; }
+        .redline .r-btn { display:inline-block; background:var(--store-primary); color:var(--store-on-primary); text-transform:uppercase; font-size:12px; letter-spacing:0.1em; font-weight:700; padding:13px 26px; border-radius:2px; transition:filter .15s, transform .15s; }
         .redline .r-btn:hover { filter:brightness(1.08); transform:translateY(-1px); }
-        .redline .r-btn-dark { display:inline-block; background:#080808; color:#fff; text-transform:uppercase; font-size:12px; letter-spacing:0.1em; font-weight:700; padding:13px 26px; border-radius:2px; }
+        .redline .r-btn-dark { display:inline-block; background:var(--store-secondary); color:var(--store-on-secondary); text-transform:uppercase; font-size:12px; letter-spacing:0.1em; font-weight:700; padding:13px 26px; border-radius:2px; }
         .redline .r-btn-ghost { display:inline-block; color:#fff; text-transform:uppercase; font-size:12px; letter-spacing:0.1em; font-weight:700; padding:12px 24px; border:1px solid rgba(255,255,255,0.6); border-radius:2px; }
         .redline .r-btn-ghost-light { display:inline-block; color:#fff; text-transform:uppercase; font-size:12px; letter-spacing:0.1em; font-weight:700; padding:12px 24px; border:1px solid #fff; border-radius:2px; }
       `}</style>

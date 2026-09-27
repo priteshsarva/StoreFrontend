@@ -20,15 +20,15 @@ const newTab = { target: "_blank", rel: "noopener noreferrer" }; // product clic
 function Tile({ p, ratio = "3/4" }) {
   return (
     <Link to={withStore(`/p/${p.dbName}/${p.productId}`)} {...newTab} className="group block">
-      <div className="overflow-hidden bg-[#f4f2ee]" style={{ aspectRatio: ratio }}>
+      <div className="overflow-hidden bg-[var(--color-panel)]" style={{ aspectRatio: ratio }}>
         {p.thumbnail
           ? <img src={p.thumbnail} alt={p.productName} loading="lazy" className="w-full h-full object-cover transition duration-[900ms] ease-out group-hover:scale-[1.04]" />
           : <div className="w-full h-full" />}
       </div>
       <div className="pt-3">
-        {p.productBrand && <div className="text-[10px] uppercase tracking-[0.16em] text-[#6f6f6f] truncate">{p.productBrand}</div>}
-        <div className="text-[12.5px] text-black leading-snug line-clamp-1 mt-1">{p.productName}</div>
-        <div className="text-[12.5px] text-[#6f6f6f] mt-1 num">{inr(p.price)}</div>
+        {p.productBrand && <div className="text-[10px] uppercase tracking-[0.16em] text-[var(--color-muted)] truncate">{p.productBrand}</div>}
+        <div className="text-[12.5px] text-[var(--color-ink)] leading-snug line-clamp-1 mt-1">{p.productName}</div>
+        <div className="text-[12.5px] text-[var(--color-muted)] mt-1 num">{inr(p.price)}</div>
       </div>
     </Link>
   );
@@ -40,7 +40,7 @@ function CircularText({ text }) {
     <svg viewBox="0 0 200 200" className="a-spin w-[128px] h-[128px]" aria-hidden="true">
       <defs><path id="a-circle" d="M100,100 m-74,0 a74,74 0 1,1 148,0 a74,74 0 1,1 -148,0" /></defs>
       {/* white halo (stroke painted under the fill) keeps it readable on photos */}
-      <text style={{ fontSize: 12.5, letterSpacing: 2, fill: "#000", stroke: "#fff", strokeWidth: 2.6, paintOrder: "stroke", textTransform: "uppercase", fontWeight: 600 }}>
+      <text style={{ fontSize: 12.5, letterSpacing: 2, fill: "var(--color-ink)", stroke: "var(--store-bg)", strokeWidth: 2.6, paintOrder: "stroke", textTransform: "uppercase", fontWeight: 600 }}>
         <textPath href="#a-circle">{t}</textPath>
       </text>
     </svg>
@@ -104,9 +104,9 @@ export default function AtelierHome() {
       };
 
   return (
-    <div className="atelier bg-white text-black">
+    <div className="atelier bg-[var(--store-bg)] text-[var(--color-ink)]">
       {/* ---------------- HERO ---------------- */}
-      <section className="relative w-full overflow-hidden" style={{ minHeight: "88vh", background: "#f4f2ee" }}>
+      <section className="relative w-full overflow-hidden" style={{ minHeight: "88vh", background: "var(--color-panel)" }}>
         {heroImg && (
           <img src={heroImg} alt="" className="absolute inset-0 w-full h-full object-cover" />
         )}
@@ -130,11 +130,11 @@ export default function AtelierHome() {
         const n = Math.min(catCards.length, 3);
         const solo = n === 1;
         return (
-          <section className="grid gap-[2px] bg-white" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
+          <section className="grid gap-[2px] bg-[var(--store-bg)]" style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}>
             {catCards.slice(0, 3).map((g) => {
               const img = g.items.find((i) => i.thumbnail)?.thumbnail;
               return (
-                <Link key={g.cat} to={withStore(`/c/${encodeURIComponent(g.cat)}`)} className="group relative block overflow-hidden" style={{ aspectRatio: solo ? "21/9" : "3/4.2", background: "#f4f2ee" }}>
+                <Link key={g.cat} to={withStore(`/c/${encodeURIComponent(g.cat)}`)} className="group relative block overflow-hidden" style={{ aspectRatio: solo ? "21/9" : "3/4.2", background: "var(--color-panel)" }}>
                   {img && <img src={img} alt={g.cat} className="absolute inset-0 w-full h-full object-cover transition duration-[900ms] ease-out group-hover:scale-[1.04]" />}
                   <div className="absolute inset-0" style={{ background: solo ? "linear-gradient(to top, rgba(0,0,0,0.3), transparent 55%)" : "transparent" }} />
                   <div className={`absolute inset-x-0 bottom-0 flex ${solo ? "justify-start px-6 md:px-14" : "justify-center"} pb-7`}>
@@ -153,11 +153,11 @@ export default function AtelierHome() {
           <div className="flex items-end justify-between mb-8">
             <div>
               <h2 className="a-display uppercase text-[22px] md:text-[34px] leading-none">Best Seller</h2>
-              <div className="text-[11px] uppercase tracking-[0.18em] text-[#6f6f6f] mt-2">Top picks{cats[0] ? ` · ${cap(cats[0])}` : ""}</div>
+              <div className="text-[11px] uppercase tracking-[0.18em] text-[var(--color-muted)] mt-2">Top picks{cats[0] ? ` · ${cap(cats[0])}` : ""}</div>
             </div>
             <div className="flex items-center gap-3">
-              <button onClick={() => slide(-1)} aria-label="Previous" className="w-9 h-9 border border-[#e6e6e6] flex items-center justify-center hover:bg-black hover:text-white transition-colors"><ArrowLeft size={16} /></button>
-              <button onClick={() => slide(1)} aria-label="Next" className="w-9 h-9 border border-[#e6e6e6] flex items-center justify-center hover:bg-black hover:text-white transition-colors"><ArrowRight size={16} /></button>
+              <button onClick={() => slide(-1)} aria-label="Previous" className="w-9 h-9 border border-[var(--color-line)] flex items-center justify-center hover:bg-[var(--store-secondary)] hover:text-white transition-colors"><ArrowLeft size={16} /></button>
+              <button onClick={() => slide(1)} aria-label="Next" className="w-9 h-9 border border-[var(--color-line)] flex items-center justify-center hover:bg-[var(--store-secondary)] hover:text-white transition-colors"><ArrowRight size={16} /></button>
               <Link to={shopAll} className="hidden sm:inline-block text-[11px] uppercase tracking-[0.14em] border-b border-black pb-0.5 hover:opacity-60 transition-opacity ml-2">View all</Link>
             </div>
           </div>
@@ -171,7 +171,7 @@ export default function AtelierHome() {
 
       {/* ---------------- EDITORIAL CAMPAIGN ---------------- */}
       {editorialImg && (
-        <section className="relative w-full mt-[70px] md:mt-[120px]" style={{ height: "72vh", background: "#f4f2ee" }}>
+        <section className="relative w-full mt-[70px] md:mt-[120px]" style={{ height: "72vh", background: "var(--color-panel)" }}>
           <img src={editorialImg} alt="" className="absolute inset-0 w-full h-full object-cover" />
           <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(0,0,0,0.35), transparent 55%)" }} />
           <div className="relative z-10 h-full flex flex-col justify-center px-6 md:px-14 max-w-[1440px] mx-auto">
@@ -205,7 +205,7 @@ export default function AtelierHome() {
                 ? <Link to={pdp(collage[4])} {...newTab} className="group block overflow-hidden flex-1" style={{ aspectRatio: "3/2" }}>
                     <img src={collage[4].thumbnail} alt="" className="w-full h-full object-cover transition duration-[900ms] group-hover:scale-[1.03]" />
                   </Link>
-                : <div className="flex-1 bg-[#f4f2ee] min-h-[160px]" />}
+                : <div className="flex-1 bg-[var(--color-panel)] min-h-[160px]" />}
             </div>
             <Link to={pdp(collage[2])} {...newTab} className="md:col-span-5 group block overflow-hidden" style={{ aspectRatio: "4/5" }}>
               <img src={collage[2].thumbnail} alt="" className="w-full h-full object-cover transition duration-[900ms] group-hover:scale-[1.03]" />
@@ -218,12 +218,12 @@ export default function AtelierHome() {
       )}
 
       {/* ---------------- TESTIMONIAL ---------------- */}
-      <section className="mt-[70px] md:mt-[120px] py-[70px] md:py-[110px] px-6" style={{ background: "#f4f2ee" }}>
+      <section className="mt-[70px] md:mt-[120px] py-[70px] md:py-[110px] px-6" style={{ background: "var(--color-panel)" }}>
         {review ? (
           <div className="max-w-[820px] mx-auto text-center">
-            <p className="a-quote text-[19px] md:text-[27px] leading-[1.5] text-black">“{review.quote}”</p>
+            <p className="a-quote text-[19px] md:text-[27px] leading-[1.5] text-[var(--color-ink)]">“{review.quote}”</p>
             <div className="mt-8 text-[13px] uppercase tracking-[0.16em]">{review.by}</div>
-            <div className="mt-3 tracking-[0.3em] text-black">★★★★★</div>
+            <div className="mt-3 tracking-[0.3em] text-[var(--color-ink)]">★★★★★</div>
           </div>
         ) : (
           <div className="max-w-[1100px] mx-auto"><ReviewsSlider images={config.reviews} /></div>
@@ -232,7 +232,7 @@ export default function AtelierHome() {
 
       {/* ---------------- CAMPAIGN BANNER ---------------- */}
       {bannerImg && (
-        <section className="relative w-full" style={{ height: "78vh", background: "#f4f2ee" }}>
+        <section className="relative w-full" style={{ height: "78vh", background: "var(--color-panel)" }}>
           <img src={bannerImg} alt="" className="absolute inset-0 w-full h-full object-cover" />
           <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.4), transparent 60%)" }} />
           <div className="relative z-10 h-full flex flex-col justify-end px-6 md:px-14 pb-14 md:pb-20 max-w-[1440px] mx-auto">
@@ -246,13 +246,13 @@ export default function AtelierHome() {
       )}
 
       {/* ---------------- NEW ARRIVALS MARQUEE ---------------- */}
-      <section className="overflow-hidden border-y border-[#e6e6e6] py-5 mt-[70px] md:mt-[120px]">
+      <section className="overflow-hidden border-y border-[var(--color-line)] py-5 mt-[70px] md:mt-[120px]">
         <div className="a-marquee">
           {[0, 1].map((k) => (
             <div key={k} className="flex items-center shrink-0">
               {Array.from({ length: 6 }).map((_, i) => (
                 <span key={i} className="flex items-center a-display uppercase text-[20px] md:text-[30px] px-6">
-                  New Arrivals <span className="inline-block w-2 h-2 rounded-full bg-black mx-6" />
+                  New Arrivals <span className="inline-block w-2 h-2 rounded-full bg-[var(--store-secondary)] mx-6" />
                 </span>
               ))}
             </div>
@@ -287,13 +287,13 @@ export default function AtelierHome() {
         .atelier .a-quote { font-weight: 400; }
         .atelier .num { font-variant-numeric: tabular-nums; }
         .atelier .a-btn {
-          display:inline-block; background:#fff; color:#000; text-transform:uppercase;
+          display:inline-block; background:var(--store-bg); color:var(--color-ink); text-transform:uppercase;
           font-size:11px; letter-spacing:0.14em; font-weight:600; padding:12px 22px; border-radius:0;
           transition:background .3s,color .3s;
         }
-        .atelier .a-btn:hover { background:#000; color:#fff; }
+        .atelier .a-btn:hover { background:var(--store-secondary); color:var(--store-on-secondary); }
         .atelier .a-btn-dark {
-          display:inline-block; background:#000; color:#fff; text-transform:uppercase;
+          display:inline-block; background:var(--store-secondary); color:var(--store-on-secondary); text-transform:uppercase;
           font-size:11px; letter-spacing:0.14em; font-weight:600; padding:14px 30px; border-radius:0;
           transition:opacity .3s;
         }

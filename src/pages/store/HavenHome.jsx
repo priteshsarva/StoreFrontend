@@ -7,7 +7,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useStore } from "../../context/StoreContext";
 import ReviewsSlider from "../../components/store/ReviewsSlider";
-import { withStore } from "../../lib/tenant";
+import { withStore, homeCategories } from "../../lib/tenant";
 import { inr } from "../../lib/money";
 import { useAutoRefresh } from "../../lib/useAutoRefresh";
 
@@ -34,7 +34,7 @@ function Tile({ p }) {
 
 export default function HavenHome() {
   const { config, api } = useStore();
-  const cats = config?.categories || [];
+  const cats = homeCategories(config);
   const refresh = useAutoRefresh();
 
   const [groups, setGroups] = useState(null);
@@ -171,7 +171,7 @@ export default function HavenHome() {
       {/* ---------------- ROOMS GRID ---------------- */}
       {rooms.length > 0 && (
         <section className="max-w-[1440px] mx-auto px-4 md:px-10 pt-14 md:pt-24">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+          <div className={`grid gap-3 md:gap-4 ${rooms.length === 1 ? "grid-cols-1" : "grid-cols-2 md:grid-cols-4"}`}>
             {rooms.map((t) => (
               <Link key={t.cat} to={withStore(`/c/${encodeURIComponent(t.cat)}`)} className="group relative block overflow-hidden" style={{ aspectRatio: "3/4", background: "var(--color-panel)" }}>
                 <img src={t.img} alt={t.cat} className="absolute inset-0 w-full h-full object-cover transition duration-[900ms] group-hover:scale-105" />

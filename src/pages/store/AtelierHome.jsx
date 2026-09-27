@@ -9,7 +9,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useStore } from "../../context/StoreContext";
 import ReviewsSlider from "../../components/store/ReviewsSlider";
-import { withStore } from "../../lib/tenant";
+import { withStore, homeCategories } from "../../lib/tenant";
 import { inr } from "../../lib/money";
 import { useAutoRefresh } from "../../lib/useAutoRefresh";
 
@@ -49,7 +49,7 @@ function CircularText({ text }) {
 
 export default function AtelierHome() {
   const { config, api } = useStore();
-  const cats = config?.categories || [];
+  const cats = homeCategories(config);
 
   const refresh = useAutoRefresh();
   const [groups, setGroups] = useState(null); // [{ cat, items }]

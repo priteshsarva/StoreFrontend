@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Wrench, Truck, ShieldCheck, Car } from "lucide-react";
 import { useStore } from "../../context/StoreContext";
 import ReviewsSlider from "../../components/store/ReviewsSlider";
-import { withStore } from "../../lib/tenant";
+import { withStore, homeCategories } from "../../lib/tenant";
 import { inr } from "../../lib/money";
 import { useAutoRefresh } from "../../lib/useAutoRefresh";
 
@@ -49,7 +49,7 @@ const BENEFITS = [
 
 export default function RedlineHome() {
   const { config, api } = useStore();
-  const cats = config?.categories || [];
+  const cats = homeCategories(config);
   const refresh = useAutoRefresh();
 
   const [groups, setGroups] = useState(null); // [{ cat, items }]
@@ -133,7 +133,7 @@ export default function RedlineHome() {
 
       {/* ---------------- FEATURED CATEGORY TILES ---------------- */}
       {featured.length > 0 && (
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-[2px] bg-[var(--store-bg)]">
+        <section className={`grid gap-[2px] bg-[var(--store-bg)] ${featured.length === 1 ? "grid-cols-1" : "grid-cols-1 md:grid-cols-3"}`}>
           {featured.map((t) => (
             <Link key={t.cat} to={withStore(`/c/${encodeURIComponent(t.cat)}`)} className="group relative block overflow-hidden bg-[var(--store-secondary)]" style={{ aspectRatio: "1/1" }}>
               <img src={t.img} alt={t.cat} className="absolute inset-0 w-full h-full object-cover opacity-80 transition duration-500 group-hover:scale-105 group-hover:opacity-95" />

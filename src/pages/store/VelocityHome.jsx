@@ -11,7 +11,7 @@ import { useStore } from "../../context/StoreContext";
 import WhatsAppPromoBar from "../../components/store/WhatsAppPromoBar";
 import ProductCard from "../../components/store/ProductCard";
 import ReviewsSlider from "../../components/store/ReviewsSlider";
-import { withStore } from "../../lib/tenant";
+import { withStore, homeCategories } from "../../lib/tenant";
 import { useAutoRefresh } from "../../lib/useAutoRefresh";
 
 const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : "");
@@ -88,7 +88,7 @@ function paletteVars(d, brand) {
 export default function VelocityHome({ variant = "velocity" }) {
   const V = VARIANTS[variant] || VARIANTS.velocity;
   const { config, api } = useStore();
-  const cats = config?.categories || [];
+  const cats = homeCategories(config);
 
   // Colour source: the vendor's brand palette (only when they picked "My brand
   // palette" AND actually set colours) vs the layout's own default palette.
@@ -125,12 +125,16 @@ export default function VelocityHome({ variant = "velocity" }) {
 
   const hasGender = useMemo(() => list.some((p) => /women/i.test(p.catName || "")) || list.some((p) => /\bmen/i.test(p.catName || "")), [list]);
   const shown = useMemo(() => {
-    // grid = products NOT already used in a campaign shot above
-    const base = list.filter((p) => !usedKeys.has(keyOf(p)));
-    if (gender === "all" || !hasGender) return base;
-    if (gender === "women") return base.filter((p) => /women/i.test(p.catName || ""));
-    return base.filter((p) => /\bmen/i.test(p.catName || "") && !/women/i.test(p.catName || ""));
-  }, [list, gender, hasGender, usedKeys]); // eslint-disable-line react-hooks/exhaustive-deps
+    // When a gender is picked, filter the FULL product set (with images) so the grid
+    // is complete — otherwise the men's/women's picks that were consumed by the
+    // campaign shots above go missing and the tab can look empty ("not working").
+    if (gender !== "all" && hasGender) {
+      if (gender === "women") return withImg.filter((p) => /women/i.test(p.catName || ""));
+      return withImg.filter((p) => /\bmen/i.test(p.catName || "") && !/women/i.test(p.catName || ""));
+    }
+    // "all": everything not already shown in a campaign shot above (no repeats)
+    return list.filter((p) => !usedKeys.has(keyOf(p)));
+  }, [list, withImg, gender, hasGender, usedKeys]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const hero = config?.hero || {};
   const storeName = config?.store_name || "";

@@ -35,7 +35,8 @@ function Tile({ p }) {
 
 export default function HavenHome() {
   const { config, api } = useStore();
-  const cats = homeCategories(config);
+  const cats = config?.categories || [];      // fetch products from EVERY category
+  const homeCats = homeCategories(config);    // which categories show as home tiles ("on home")
   const refresh = useAutoRefresh();
 
   const [groups, setGroups] = useState(null);
@@ -74,8 +75,8 @@ export default function HavenHome() {
   const { catTiles, heroRight, finishingHero, finishing, kitchenHero, kitchen, feature, gallery } = alloc;
   const heroLeftImg = hero.image_url || catTiles[0]?.img || finishing[0]?.thumbnail;
   const heroRightImg = heroRight?.thumbnail || catTiles[1]?.img;
-  const strip = catTiles.slice(0, 5);
-  const rooms = catTiles.slice(0, 4);
+  const strip = catTiles.filter((t) => homeCats.includes(t.cat)).slice(0, 5);
+  const rooms = catTiles.filter((t) => homeCats.includes(t.cat)).slice(0, 4);
 
   return (
     <div className="haven" style={{ background: "var(--store-bg)", color: "var(--color-ink)" }}>

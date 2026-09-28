@@ -50,7 +50,8 @@ function CircularText({ text }) {
 
 export default function AtelierHome() {
   const { config, api } = useStore();
-  const cats = homeCategories(config);
+  const cats = config?.categories || [];      // fetch products from EVERY category
+  const homeCats = homeCategories(config);    // which categories show as home cards ("on home")
 
   const refresh = useAutoRefresh();
   const [groups, setGroups] = useState(null); // [{ cat, items }]
@@ -64,7 +65,7 @@ export default function AtelierHome() {
   }, [cats.join("|"), refresh]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pool = useMemo(() => (groups || []).flatMap((g) => g.items).filter((p) => p.thumbnail), [groups]);
-  const catCards = useMemo(() => (groups || []).filter((g) => g.items.some((i) => i.thumbnail)).slice(0, 3), [groups]);
+  const catCards = useMemo(() => (groups || []).filter((g) => homeCats.includes(g.cat) && g.items.some((i) => i.thumbnail)).slice(0, 3), [groups, homeCats.join("|")]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const hero = config?.hero || {};
   const storeName = config?.store_name || "";

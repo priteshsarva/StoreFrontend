@@ -89,7 +89,8 @@ function paletteVars(d, brand) {
 export default function VelocityHome({ variant = "velocity" }) {
   const V = VARIANTS[variant] || VARIANTS.velocity;
   const { config, api } = useStore();
-  const cats = homeCategories(config);
+  const homeCats = homeCategories(config);
+  const cats = homeCats.length ? homeCats : (config?.categories || []);   // never empty → products always load
 
   // Colour source: the vendor's brand palette (only when they picked "My brand
   // palette" AND actually set colours) vs the layout's own default palette.

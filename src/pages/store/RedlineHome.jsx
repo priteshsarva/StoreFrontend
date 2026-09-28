@@ -50,7 +50,8 @@ const BENEFITS = [
 
 export default function RedlineHome() {
   const { config, api } = useStore();
-  const cats = homeCategories(config);
+  const cats = config?.categories || [];      // fetch products from EVERY category
+  const homeCats = homeCategories(config);    // which categories show as home tiles ("on home")
   const refresh = useAutoRefresh();
 
   const [groups, setGroups] = useState(null); // [{ cat, items }]
@@ -93,8 +94,8 @@ export default function RedlineHome() {
 
   const { catTiles, heroProduct, flash, popular, interior, bannerA, bannerB } = alloc;
   const heroImg = hero.image_url || heroProduct?.thumbnail || bannerA?.thumbnail;
-  const featured = catTiles.slice(0, 3);
-  const topCats = catTiles.slice(0, 6);
+  const featured = catTiles.filter((t) => homeCats.includes(t.cat)).slice(0, 3);
+  const topCats = catTiles.filter((t) => homeCats.includes(t.cat)).slice(0, 6);
 
   const railRef = useRef(null);
   const slide = (dir) => { const el = railRef.current; if (el) el.scrollBy({ left: dir * Math.round(el.clientWidth * 0.85), behavior: "smooth" }); };

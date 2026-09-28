@@ -267,7 +267,12 @@ function FilterRail({
 }) {
   if (!facets) return <div className="text-sm text-muted">Loading filters…</div>;
   const subs = facets.subcategories || [];
-  const sizes = facets.sizes || [];
+  // Drop junk size values (empty, "null", "na", …) so the Size filter only shows
+  // when the products actually carry real sizes.
+  const sizes = (facets.sizes || []).filter((s) => {
+    const v = String(s || "").trim().toLowerCase();
+    return v && v !== "null" && v !== "undefined" && v !== "na" && v !== "n/a" && v !== "-";
+  });
   const cats = [...categories].sort((a, b) => String(a.label).localeCompare(String(b.label)));
   return (
     <div className="text-sm">

@@ -36,6 +36,11 @@
 
 html { scroll-behavior: smooth; }
 
+/* Stop the whole page sliding left-right on mobile (the fixed reveal footer +
+   full-bleed sections can spill past the viewport). `clip`, not `hidden`, so it
+   never turns body into a scroll container that would break sticky headers. */
+html, body { overflow-x: clip; }
+
 /* Mobile bottom tab bar height — content/footer clear it, the product page's
    sticky action bar sits just above it. */
 :root { --mnav-h: 3.7rem; }

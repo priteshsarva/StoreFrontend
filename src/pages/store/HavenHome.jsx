@@ -7,6 +7,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useStore } from "../../context/StoreContext";
 import ReviewsSlider from "../../components/store/ReviewsSlider";
+import FeaturedBrands from "../../components/store/FeaturedBrands";
 import { withStore, homeCategories } from "../../lib/tenant";
 import { inr } from "../../lib/money";
 import { useAutoRefresh } from "../../lib/useAutoRefresh";
@@ -106,7 +107,7 @@ export default function HavenHome() {
           <div className="grid gap-3 md:gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(strip.length, 5)}, minmax(0,1fr))` }}>
             {strip.map((t) => (
               <Link key={t.cat} to={withStore(`/c/${encodeURIComponent(t.cat)}`)} className="group block">
-                <div className="overflow-hidden" style={{ aspectRatio: "3/4", background: "var(--color-panel)" }}>
+                <div className="overflow-hidden" style={{ aspectRatio: strip.length === 1 ? "21/9" : "3/4", background: "var(--color-panel)" }}>
                   <img src={t.img} alt={t.cat} className="w-full h-full object-cover transition duration-[900ms] group-hover:scale-105" />
                 </div>
                 <div className="h-serif text-center text-[15px] md:text-[18px] mt-3">{cap(t.cat)}</div>
@@ -173,7 +174,7 @@ export default function HavenHome() {
         <section className="max-w-[1440px] mx-auto px-4 md:px-10 pt-14 md:pt-24">
           <div className={`grid gap-3 md:gap-4 ${rooms.length === 1 ? "grid-cols-1" : "grid-cols-2 md:grid-cols-4"}`}>
             {rooms.map((t) => (
-              <Link key={t.cat} to={withStore(`/c/${encodeURIComponent(t.cat)}`)} className="group relative block overflow-hidden" style={{ aspectRatio: "3/4", background: "var(--color-panel)" }}>
+              <Link key={t.cat} to={withStore(`/c/${encodeURIComponent(t.cat)}`)} className="group relative block overflow-hidden" style={{ aspectRatio: rooms.length === 1 ? "21/9" : "3/4", background: "var(--color-panel)" }}>
                 <img src={t.img} alt={t.cat} className="absolute inset-0 w-full h-full object-cover transition duration-[900ms] group-hover:scale-105" />
                 <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(46,33,26,0.55), transparent 50%)" }} />
                 <div className="absolute inset-x-0 bottom-0 p-4">
@@ -206,6 +207,9 @@ export default function HavenHome() {
           </div>
         </section>
       )}
+
+      {/* ---------------- FEATURED BRANDS ---------------- */}
+      <FeaturedBrands />
 
       {/* ---------------- REVIEWS ---------------- */}
       <section className="mt-16 md:mt-24 py-14 md:py-20 px-6" style={{ background: "var(--color-panel)" }}>

@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, Wrench, Truck, ShieldCheck, Car } from "lucide-react";
 import { useStore } from "../../context/StoreContext";
 import ReviewsSlider from "../../components/store/ReviewsSlider";
+import FeaturedBrands from "../../components/store/FeaturedBrands";
 import { withStore, homeCategories } from "../../lib/tenant";
 import { inr } from "../../lib/money";
 import { useAutoRefresh } from "../../lib/useAutoRefresh";
@@ -135,7 +136,7 @@ export default function RedlineHome() {
       {featured.length > 0 && (
         <section className={`grid gap-[2px] bg-[var(--store-bg)] ${featured.length === 1 ? "grid-cols-1" : "grid-cols-1 md:grid-cols-3"}`}>
           {featured.map((t) => (
-            <Link key={t.cat} to={withStore(`/c/${encodeURIComponent(t.cat)}`)} className="group relative block overflow-hidden bg-[var(--store-secondary)]" style={{ aspectRatio: "1/1" }}>
+            <Link key={t.cat} to={withStore(`/c/${encodeURIComponent(t.cat)}`)} className="group relative block overflow-hidden bg-[var(--store-secondary)]" style={{ aspectRatio: featured.length === 1 ? "21/9" : "1/1" }}>
               <img src={t.img} alt={t.cat} className="absolute inset-0 w-full h-full object-cover opacity-80 transition duration-500 group-hover:scale-105 group-hover:opacity-95" />
               <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(8,8,8,0.8), transparent 55%)" }} />
               <div className="absolute inset-x-0 bottom-0 p-6">
@@ -151,7 +152,7 @@ export default function RedlineHome() {
       {flash.length > 0 && (
         <section className="max-w-[1440px] mx-auto px-6 md:px-14 pt-[50px] md:pt-[70px]">
           <div className="text-center mb-8">
-            <h2 className="r-display text-[26px] md:text-[38px] uppercase" style={{ color: "var(--store-primary)" }}>Flash Sale</h2>
+            <h2 className="r-display text-[26px] md:text-[38px] uppercase" style={{ color: "var(--color-ink)" }}>Flash Sale</h2>
             <div className="text-[12px] uppercase tracking-[0.18em] text-[var(--color-muted)] mt-1">Save big on this season's picks</div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-x-3 gap-y-8 md:gap-x-5">
@@ -164,7 +165,7 @@ export default function RedlineHome() {
       {topCats.length > 0 && (
         <section className="max-w-[1440px] mx-auto px-6 md:px-14 pt-[50px] md:pt-[80px]">
           <h2 className="r-display text-[22px] md:text-[32px] uppercase text-center mb-8">Top Categories</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+          <div className="grid gap-3 md:gap-4 mx-auto" style={{ gridTemplateColumns: `repeat(${Math.min(topCats.length, 3)}, minmax(0, 1fr))`, maxWidth: topCats.length < 3 ? `${topCats.length * 460}px` : undefined }}>
             {topCats.map((t) => (
               <Link key={t.cat} to={withStore(`/c/${encodeURIComponent(t.cat)}`)} className="group relative block overflow-hidden bg-[var(--store-secondary)]" style={{ aspectRatio: "16/10" }}>
                 <img src={t.img} alt={t.cat} className="absolute inset-0 w-full h-full object-cover opacity-80 transition duration-500 group-hover:scale-105" />
@@ -246,6 +247,9 @@ export default function RedlineHome() {
         </section>
       )}
 
+      {/* ---------------- FEATURED BRANDS ---------------- */}
+      <FeaturedBrands />
+
       {/* ---------------- REVIEWS ---------------- */}
       <section className="mt-[50px] md:mt-[80px] py-[50px] md:py-[70px] bg-[var(--color-panel)] border-t border-[var(--color-line)]">
         <h2 className="r-display text-[22px] md:text-[32px] uppercase text-center mb-8">Top Reviews</h2>
@@ -253,7 +257,7 @@ export default function RedlineHome() {
           ? <div className="max-w-[1100px] mx-auto px-4"><ReviewsSlider images={config.reviews} /></div>
           : (
             <div className="max-w-[760px] mx-auto text-center px-6">
-              <div className="tracking-[0.3em]" style={{ color: "var(--store-primary)" }}>★★★★★</div>
+              <div className="tracking-[0.3em]" style={{ color: "var(--color-ink)" }}>★★★★★</div>
               <p className="text-[18px] md:text-[22px] leading-relaxed mt-4">“Perfect fit and finish. The upgrade looks incredible — quality is obvious. Highly recommend.”</p>
               <div className="mt-5 text-[13px] uppercase tracking-[0.16em] font-semibold">{storeName || "A happy customer"}</div>
             </div>

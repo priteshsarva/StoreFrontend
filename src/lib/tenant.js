@@ -18,9 +18,10 @@ export function withStore(path) {
 // uses this so the "show on home" toggle works on all of them, not just the default.
 export function homeCategories(config) {
   const items = config?.nav?.items;
+  // Vendor curated a menu → honour it EXACTLY, including "none on home" (returns [] →
+  // no categories shown). Only a store that never curated falls back to all categories.
   if (Array.isArray(items) && items.length) {
-    const picked = items.filter((i) => i && i.category && i.on_home !== false).map((i) => i.category);
-    if (picked.length) return picked;
+    return items.filter((i) => i && i.category && i.on_home !== false).map((i) => i.category);
   }
   return config?.categories || [];
 }

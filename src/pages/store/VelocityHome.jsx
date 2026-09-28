@@ -11,6 +11,7 @@ import { useStore } from "../../context/StoreContext";
 import WhatsAppPromoBar from "../../components/store/WhatsAppPromoBar";
 import ProductCard from "../../components/store/ProductCard";
 import ReviewsSlider from "../../components/store/ReviewsSlider";
+import FeaturedBrands from "../../components/store/FeaturedBrands";
 import { withStore, homeCategories } from "../../lib/tenant";
 import { useAutoRefresh } from "../../lib/useAutoRefresh";
 
@@ -317,6 +318,8 @@ export default function VelocityHome({ variant = "velocity" }) {
       )}
 
       {/* reviews (vendor-added, reuses the shared auto-slider) */}
+      <FeaturedBrands />
+
       <div className="v-lime-soft"><ReviewsSlider images={config?.reviews} /></div>
 
       {/* This template is single-category by design (Velocity = shoes, Chrono =

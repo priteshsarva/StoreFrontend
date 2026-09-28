@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useStore } from "../../context/StoreContext";
 import ReviewsSlider from "../../components/store/ReviewsSlider";
+import FeaturedBrands from "../../components/store/FeaturedBrands";
 import { withStore, homeCategories } from "../../lib/tenant";
 import { inr } from "../../lib/money";
 import { useAutoRefresh } from "../../lib/useAutoRefresh";
@@ -89,8 +90,8 @@ export default function AtelierHome() {
   const { heroProduct, bestsellers, editorialProduct, collage, bannerProduct, arrivals } = a;
   const heroImg = hero.image_url || heroProduct?.thumbnail || pool[0]?.thumbnail;
   const heroTitle = hero.title || "Timeless style for modern lives";
-  const editorialImg = editorialProduct?.thumbnail || heroImg;
-  const bannerImg = bannerProduct?.thumbnail || heroImg;
+  const editorialImg = editorialProduct?.thumbnail;   // never reuse the hero image
+  const bannerImg = bannerProduct?.thumbnail;         // section hides when it has no own image
 
   // Best-seller rail: arrow controls that actually slide the row.
   const railRef = useRef(null);
@@ -216,6 +217,9 @@ export default function AtelierHome() {
           </div>
         </section>
       )}
+
+      {/* ---------------- FEATURED BRANDS ---------------- */}
+      <FeaturedBrands />
 
       {/* ---------------- TESTIMONIAL ---------------- */}
       <section className="mt-[70px] md:mt-[120px] py-[70px] md:py-[110px] px-6" style={{ background: "var(--color-panel)" }}>

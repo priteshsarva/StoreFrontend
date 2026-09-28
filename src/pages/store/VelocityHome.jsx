@@ -105,7 +105,7 @@ export default function VelocityHome({ variant = "velocity" }) {
 
   useEffect(() => {
     if (!shoeCat) { setProducts([]); return; }
-    api.products({ category: shoeCat, limit: 24 }).then((r) => setProducts(r.results || [])).catch(() => setProducts([]));
+    api.products({ category: shoeCat, limit: 48 }).then((r) => setProducts(r.results || [])).catch(() => setProducts([]));
   }, [shoeCat, refresh]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const list = products || [];

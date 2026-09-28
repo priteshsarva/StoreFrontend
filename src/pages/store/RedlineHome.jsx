@@ -58,7 +58,7 @@ export default function RedlineHome() {
   useEffect(() => {
     if (!cats.length) { setGroups([]); return; }
     Promise.all(cats.slice(0, 6).map((c) =>
-      api.products({ category: c, limit: 14 }).then((r) => ({ cat: c, items: (r.results || []).filter((p) => p.thumbnail) })).catch(() => ({ cat: c, items: [] }))
+      api.products({ category: c, limit: 40 }).then((r) => ({ cat: c, items: (r.results || []).filter((p) => p.thumbnail) })).catch(() => ({ cat: c, items: [] }))
     )).then(setGroups).catch(() => setGroups([]));
   }, [cats.join("|"), refresh]); // eslint-disable-line react-hooks/exhaustive-deps
 

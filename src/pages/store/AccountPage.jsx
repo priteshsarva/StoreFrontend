@@ -210,7 +210,9 @@ function AccountDashboard() {
                           </div>
                           {(det.shipments || []).map((s, i) => (
                             <div key={i} className="mt-3 pt-3 border-t border-line text-xs">
-                              <div className="text-ink" style={{ fontWeight: 600 }}>Shipped{s.courier ? ` via ${s.courier}` : ""}</div>
+                              <div className="text-ink" style={{ fontWeight: 600 }}>
+                                {s.status_label || "Shipped"}{s.courier ? ` · ${s.courier}` : ""}
+                              </div>
                               {s.tracking_no && <div className="text-muted mt-0.5">Tracking number: <span className="num text-ink-soft">{s.tracking_no}</span></div>}
                               {s.tracking_url && (
                                 <a href={s.tracking_url} target="_blank" rel="noreferrer" className="underline text-ink-soft inline-block mt-1">Track parcel →</a>

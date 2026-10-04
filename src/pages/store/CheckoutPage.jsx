@@ -8,6 +8,7 @@ import { withStore } from "../../lib/tenant";
 import { useCustomerAuth } from "../../context/CustomerAuthContext";
 import { setPending, markPurchaseTracked, isPurchaseTracked } from "../../lib/pendingPay";
 import { ecom, toItem } from "../../lib/analytics";
+import { computeCheckout, enabledMethods, METHOD_LABELS } from "../../lib/checkout";
 
 const INPUT = "w-full border border-line-strong bg-paper px-3.5 py-2.5 text-sm text-ink placeholder:text-muted focus:outline-none focus:border-ink transition-colors";
 
@@ -24,6 +25,13 @@ export default function CheckoutPage() {
 
   const pay = config?.payment || null; // { mode, upi_id, upi_name, whatsapp }
   const hasUpi = !!(pay && pay.upi_id);
+
+  // Prepaid / COD / Semi-COD, as the vendor configured. Default to their pick;
+  // a store that never set this up stays prepaid-only (no chooser shown).
+  const checkout = config?.checkout || {};
+  const methods = enabledMethods(checkout);
+  const [method, setMethod] = useState(() => (methods.includes(checkout.default) ? checkout.default : methods[0]));
+  const quote = computeCheckout(total, method, checkout);
 
   const [addresses, setAddresses] = useState([]);
   const [addressId, setAddressId] = useState("");
@@ -71,6 +79,7 @@ export default function CheckoutPage() {
         buyer_name: address ? address.name : undefined,
         buyer_phone: address ? address.phone : undefined,
         buyer_email: !customer && form.email ? form.email.trim() : undefined,
+        payment_method: method,
         note,
       });
       if (r.token) sessionFromCheckout(r.token, r.customer);
@@ -80,6 +89,21 @@ export default function CheckoutPage() {
       // refresh / return from the UPI app restores it; cleared once the buyer
       // claims payment (taps WhatsApp) so it never nags again.
       const items = lineItems.map((it) => toItem(it, it.qty));
+      // Server is authoritative on the split: online_amount is what's collected now
+      // (full for prepaid, advance for semi-COD, 0 for pure COD), cod_due at delivery.
+      const onlineDue = Number(r.online_amount != null ? r.online_amount : r.total);
+      const codDue = Number(r.cod_due || 0);
+
+      // Nothing to pay online (pure COD) → the order IS the conversion; confirm on WhatsApp.
+      if (!(onlineDue > 0)) {
+        if (!isPurchaseTracked(config.slug, r.order_no)) {
+          ecom("purchase", { items, value: r.total, transaction_id: r.order_no });
+          markPurchaseTracked(config.slug, r.order_no);
+        }
+        setResult(r);
+        return;
+      }
+
       // Pay0 (automated gateway): redirect to the hosted payment page; the order
       // is confirmed by the server callback, not by the buyer.
       if (pay?.method === "pay0") {
@@ -90,9 +114,9 @@ export default function CheckoutPage() {
       }
       if (hasUpi) {
         // purchase fires later, on payment-confirmed (PaymentPage.onClaim) — stash
-        // the items so the pixel has them then.
+        // the items so the pixel has them then. total = the online slice to pay now.
         setPending({
-          slug: config.slug, orderNo: r.order_no, total: r.total,
+          slug: config.slug, orderNo: r.order_no, total: onlineDue, cod_due: codDue, payment_method: r.payment_method,
           storeName: config.store_name, upiId: pay.upi_id, upiName: pay.upi_name, whatsapp: pay.whatsapp,
           items,
           lines: lineItems.map((it) => ({ name: it.name, image: it.image, qty: it.qty, price: it.price })),
@@ -121,7 +145,9 @@ export default function CheckoutPage() {
         </div>
         <h1 className="text-2xl text-ink mb-2">Order {result.order_no} placed</h1>
         <p className="text-ink-soft mb-8 leading-relaxed">
-          Total <span className="num">{inr(result.total)}</span>. Send this order to {config?.store_name} on WhatsApp to confirm it.
+          {Number(result.cod_due) > 0 && !(Number(result.online_amount) > 0)
+            ? <>Pay <span className="num">{inr(result.cod_due)}</span> on delivery. Send this order to {config?.store_name} on WhatsApp to confirm it.</>
+            : <>Total <span className="num">{inr(result.total)}</span>. Send this order to {config?.store_name} on WhatsApp to confirm it.</>}
         </p>
         {result.token && (
           <p className="text-sm text-ink-soft mb-6">
@@ -151,9 +177,47 @@ export default function CheckoutPage() {
             <span className="num">{inr(it.price * it.qty)}</span>
           </div>
         ))}
-        <div className="flex justify-between pt-3 mt-2 border-t border-line">
-          <span className="text-ink" style={{ fontWeight: 600 }}>Total</span>
-          <span className="price text-xl text-ink">{inr(total)}</span>
+
+        {methods.length > 1 && (
+          <div className="mt-4 pt-4 border-t border-line">
+            <label className="block text-xs uppercase tracking-[0.12em] text-muted mb-2.5">Payment method</label>
+            <div className="flex flex-col gap-2">
+              {methods.map((m) => {
+                const q = computeCheckout(total, m, checkout);
+                const sub =
+                  m === "prepaid" ? (q.prepaid_discount > 0 ? `Pay ${inr(q.total)} online — save ${inr(q.prepaid_discount)}` : `Pay ${inr(q.total)} online`)
+                  : m === "cod" ? (q.cod_fee > 0 ? `Pay ${inr(q.total)} on delivery (incl. ${inr(q.cod_fee)} COD charge)` : `Pay ${inr(q.total)} on delivery`)
+                  : `Pay ${inr(q.online_amount)} now, ${inr(q.cod_due)} on delivery`;
+                return (
+                  <label key={m} className={`border p-3.5 text-sm cursor-pointer transition-colors ${method === m ? "border-ink bg-panel" : "border-line hover:border-line-strong"}`}>
+                    <input type="radio" name="paymethod" className="mr-2 accent-[var(--store-primary,#1a1512)]" checked={method === m} onChange={() => setMethod(m)} />
+                    <strong className="text-ink">{METHOD_LABELS[m] || m}</strong>
+                    <span className="block text-muted ml-5 mt-0.5 text-xs">{sub}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <div className="pt-3 mt-3 border-t border-line text-sm">
+          {(quote.prepaid_discount > 0 || quote.cod_fee > 0) && (
+            <>
+              <div className="flex justify-between py-0.5 text-ink-soft"><span>Subtotal</span><span className="num">{inr(quote.subtotal)}</span></div>
+              {quote.prepaid_discount > 0 && <div className="flex justify-between py-0.5 text-ink-soft"><span>Prepaid discount</span><span className="num">− {inr(quote.prepaid_discount)}</span></div>}
+              {quote.cod_fee > 0 && <div className="flex justify-between py-0.5 text-ink-soft"><span>COD charge</span><span className="num">+ {inr(quote.cod_fee)}</span></div>}
+            </>
+          )}
+          <div className="flex justify-between pt-2 mt-1 border-t border-line">
+            <span className="text-ink" style={{ fontWeight: 600 }}>Total</span>
+            <span className="price text-xl text-ink">{inr(quote.total)}</span>
+          </div>
+          {quote.cod_due > 0 && (
+            <div className="flex justify-between mt-2 text-xs text-muted">
+              <span>{quote.online_amount > 0 ? "Pay now · at delivery" : "Pay at delivery"}</span>
+              <span className="num">{quote.online_amount > 0 ? `${inr(quote.online_amount)} · ${inr(quote.cod_due)}` : inr(quote.cod_due)}</span>
+            </div>
+          )}
         </div>
       </div>
 

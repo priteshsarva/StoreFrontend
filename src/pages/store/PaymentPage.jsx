@@ -38,7 +38,9 @@ export default function PaymentPage() {
 
   const payCfg = config?.payment || {};
   const base = pending && pending.orderNo === orderNo ? pending : null;
-  const total = base?.total ?? (srv ? Number(srv.total) : 0);
+  // The amount to collect online now = the advance for semi-COD, full for prepaid.
+  const total = base?.total ?? (srv ? Number(srv.online_amount != null ? srv.online_amount : srv.total) : 0);
+  const codDue = Number(base?.cod_due ?? srv?.cod_due ?? 0);
   const pay = useMemo(() => {
     const upiId = base?.upiId || payCfg.upi_id;
     if (!upiId) return null;
@@ -106,7 +108,11 @@ export default function PaymentPage() {
         <Check size={22} />
       </div>
       <h1 className="text-2xl text-ink mb-1">Order {orderNo} placed</h1>
-      <p className="text-ink-soft mb-6">Pay now to confirm it, then tap the WhatsApp button so we can verify it.</p>
+      <p className="text-ink-soft mb-6">
+        {codDue > 0
+          ? <>Pay <span className="num">{inr(total)}</span> now to confirm it — <span className="num">{inr(codDue)}</span> is due on delivery. Then tap the WhatsApp button so we can verify it.</>
+          : <>Pay now to confirm it, then tap the WhatsApp button so we can verify it.</>}
+      </p>
 
       <UpiPayCard pay={pay} utr={utr} onUtr={setUtr} onWhatsApp={onClaim} />
 

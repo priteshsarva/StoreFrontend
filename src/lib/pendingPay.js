@@ -51,16 +51,34 @@ export function upiLink({ upiId, upiName, storeName, total, orderNo }) {
   return "upi://pay?" + p.toString();
 }
 
-// WhatsApp "I've paid" message — carries the order + amount + (optional) UTR so
-// the vendor can match the screenshot and confirm the order.
-export function payWhatsAppUrl({ whatsapp, storeName, orderNo, total, utr }) {
-  const inr = "₹" + Math.round(Number(total) || 0).toLocaleString("en-IN");
-  const lines = [
-    `Hi ${storeName || ""}! 👋`, "",
-    `I've paid for my order *${orderNo}* — ${inr}.`,
-    utr ? `UTR / reference: *${utr}*` : "",
-    "Sending my payment screenshot now 📸",
-  ].filter(Boolean);
+// WhatsApp "I've paid" message — carries the order + amount + (optional) UTR,
+// the ordered items (with product links), the buyer's name / phone / address,
+// and a link to the full order, so the vendor can verify at a glance.
+export function payWhatsAppUrl({ whatsapp, storeName, orderNo, total, utr, name, phone: buyerPhone, address, codDue, items, orderUrl }) {
+  const money = (n) => "₹" + Math.round(Number(n) || 0).toLocaleString("en-IN");
+  const a = address || {};
+  const addrLine = [a.line1, a.line2, a.city, a.state, a.pincode].filter(Boolean).join(", ");
+  const L = [
+    `Hi ${storeName || ""}! 👋`,
+    `I've paid for my order *${orderNo}* — ${money(total)}.`,
+  ];
+  if (Number(codDue) > 0) L.push(`(${money(codDue)} to pay on delivery)`);
+  if (utr) L.push(`UTR / reference: *${utr}*`);
+  if (Array.isArray(items) && items.length) {
+    L.push("", "🛍️ *Items*");
+    items.forEach((it, i) => {
+      L.push(`${i + 1}. ${it.name} ×${it.qty || 1} — ${money((it.price || 0) * (it.qty || 1))}`);
+      if (it.url) L.push(`   🔗 ${it.url}`);
+    });
+  }
+  if (name || buyerPhone || addrLine) {
+    L.push("", "📦 *Deliver to*");
+    if (name) L.push(`👤 ${name}`);
+    if (buyerPhone) L.push(`📞 ${buyerPhone}`);
+    if (addrLine) L.push(addrLine);
+  }
+  if (orderUrl) L.push("", `🧾 View order: ${orderUrl}`);
+  L.push("", "Sending my payment screenshot now 📸");
   const phone = String(whatsapp || "").replace(/[^\d]/g, "");
-  return `https://wa.me/${phone}?text=${encodeURIComponent(lines.join("\n"))}`;
+  return `https://wa.me/${phone}?text=${encodeURIComponent(L.join("\n"))}`;
 }

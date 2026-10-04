@@ -139,4 +139,7 @@ export const storeApi = (slug) => ({
   payVerify: (orderNo) => req(slug, `/orders/${encodeURIComponent(orderNo)}/pay-verify`),
   myOrders: () => req(slug, "/me/orders", { auth: true }),
   myOrder: (orderNo) => req(slug, `/me/orders/${orderNo}`, { auth: true }),
+  // Public read-only order view (the "view order" link in the payment WhatsApp).
+  // No auth — the signed ?t= token gates it server-side.
+  orderView: (orderNo, t) => req(slug, `/o/${encodeURIComponent(orderNo)}?t=${encodeURIComponent(t || "")}`),
 });

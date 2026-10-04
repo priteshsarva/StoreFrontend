@@ -115,11 +115,25 @@ export default function CheckoutPage() {
       if (hasUpi) {
         // purchase fires later, on payment-confirmed (PaymentPage.onClaim) — stash
         // the items so the pixel has them then. total = the online slice to pay now.
+        // Name/phone/address ride along so the buyer's "I've paid" WhatsApp carries
+        // the order's details and the vendor can verify at a glance.
+        const ship = address || (customer && addressId ? addresses.find((a) => a.id === addressId) : null) || null;
+        const origin = typeof window !== "undefined" ? window.location.origin : "";
+        const orderUrl = r.order_token
+          ? origin + withStore(`/o/${encodeURIComponent(r.order_no)}?t=${encodeURIComponent(r.order_token)}`)
+          : undefined;
         setPending({
           slug: config.slug, orderNo: r.order_no, total: onlineDue, cod_due: codDue, payment_method: r.payment_method,
           storeName: config.store_name, upiId: pay.upi_id, upiName: pay.upi_name, whatsapp: pay.whatsapp,
+          buyer_name: ship?.name || customer?.name || "",
+          buyer_phone: ship?.phone || customer?.phone || "",
+          address: ship ? { line1: ship.line1, line2: ship.line2, city: ship.city, state: ship.state, pincode: ship.pincode } : null,
+          order_url: orderUrl,
           items,
-          lines: lineItems.map((it) => ({ name: it.name, image: it.image, qty: it.qty, price: it.price })),
+          lines: lineItems.map((it) => ({
+            name: it.name, image: it.image, qty: it.qty, price: it.price,
+            url: (it.db_name && it.product_id) ? origin + withStore(`/p/${it.db_name}/${it.product_id}`) : undefined,
+          })),
         });
         navigate(withStore(`/pay/${encodeURIComponent(r.order_no)}`));
         return;

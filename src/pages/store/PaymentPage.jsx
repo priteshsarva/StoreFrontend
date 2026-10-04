@@ -44,12 +44,21 @@ export default function PaymentPage() {
   const pay = useMemo(() => {
     const upiId = base?.upiId || payCfg.upi_id;
     if (!upiId) return null;
+    // Buyer details for the "I've paid" WhatsApp: stashed at checkout, else from
+    // the server order (logged-in buyers). srv.address may be a JSON string.
+    let srvAddr = null;
+    try { srvAddr = typeof srv?.address === "string" ? JSON.parse(srv.address) : (srv?.address || null); } catch { srvAddr = null; }
     return {
-      orderNo, total,
+      orderNo, total, codDue,
       storeName: base?.storeName || config?.store_name || "Store",
       upiId, upiName: base?.upiName || payCfg.upi_name || "", whatsapp: base?.whatsapp || payCfg.whatsapp || "",
+      name: base?.buyer_name || srv?.buyer_name || "",
+      phone: base?.buyer_phone || srv?.buyer_phone || "",
+      address: base?.address || srvAddr || null,
+      items: Array.isArray(base?.lines) ? base.lines.map((l) => ({ name: l.name, qty: l.qty, price: l.price, url: l.url })) : undefined,
+      orderUrl: base?.order_url,
     };
-  }, [base, total, orderNo, config]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [base, total, codDue, orderNo, config, srv]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const serverPaid = srv && (srv.payment_status === "verified" || ["processing", "completed"].includes(srv.status));
   const serverClaimed = srv && srv.payment_status === "claimed";

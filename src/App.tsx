@@ -20,6 +20,7 @@ import StoreProductPage from './pages/store/StoreProductPage.jsx';
 import CartPage from './pages/store/CartPage.jsx';
 import CheckoutPage from './pages/store/CheckoutPage.jsx';
 import PaymentPage from './pages/store/PaymentPage.jsx';
+import OrderViewPage from './pages/store/OrderViewPage.jsx';
 import PendingPayBanner from './components/store/PendingPayBanner.jsx';
 import PendingPayModal from './components/store/PendingPayModal.jsx';
 import AccountPage from './pages/store/AccountPage.jsx';
@@ -148,6 +149,7 @@ function AppShell() {
               <Route path="/wishlist" element={<WishlistPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/pay/:orderNo" element={<PaymentPage />} />
+              <Route path="/o/:orderNo" element={<OrderViewPage />} />
               <Route path="/account" element={<AccountPage />} />
               <Route path="/policy/:kind" element={<PolicyPage />} />
               <Route path="/faq" element={<FaqPage />} />

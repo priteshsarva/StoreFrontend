@@ -22,9 +22,12 @@ export default function PendingPayModal() {
 
   const payCfg = config?.payment || {};
   const pay = {
-    orderNo: pending.orderNo, total: pending.total,
+    orderNo: pending.orderNo, total: pending.total, codDue: pending.cod_due,
     storeName: pending.storeName || config?.store_name || "Store",
     upiId: pending.upiId || payCfg.upi_id, upiName: pending.upiName || payCfg.upi_name || "", whatsapp: pending.whatsapp || payCfg.whatsapp || "",
+    name: pending.buyer_name || "", phone: pending.buyer_phone || "", address: pending.address || null,
+    items: Array.isArray(pending.lines) ? pending.lines.map((l) => ({ name: l.name, qty: l.qty, price: l.price, url: l.url })) : undefined,
+    orderUrl: pending.order_url,
   };
   if (!pay.upiId) return null; // no UPI to show a QR for
 

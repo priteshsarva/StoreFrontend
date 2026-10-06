@@ -28,10 +28,13 @@ export default function CheckoutPage() {
 
   // Prepaid / COD / Semi-COD, as the vendor configured. Default to their pick;
   // a store that never set this up stays prepaid-only (no chooser shown).
+  // WhatsApp-only store (vendor chose it, or admin forced it): no online payment
+  // and no COD/prepaid fees — the order is a plain subtotal handed off to WhatsApp.
+  const whatsappOnly = pay?.method === "whatsapp";
   const checkout = config?.checkout || {};
   const methods = enabledMethods(checkout);
   const [method, setMethod] = useState(() => (methods.includes(checkout.default) ? checkout.default : methods[0]));
-  const quote = computeCheckout(total, method, checkout);
+  const quote = computeCheckout(total, whatsappOnly ? "prepaid" : method, whatsappOnly ? {} : checkout);
 
   const [addresses, setAddresses] = useState([]);
   const [addressId, setAddressId] = useState("");
@@ -79,7 +82,7 @@ export default function CheckoutPage() {
         buyer_name: address ? address.name : undefined,
         buyer_phone: address ? address.phone : undefined,
         buyer_email: !customer && form.email ? form.email.trim() : undefined,
-        payment_method: method,
+        payment_method: whatsappOnly ? undefined : method,
         note,
       });
       if (r.token) sessionFromCheckout(r.token, r.customer);
@@ -192,7 +195,7 @@ export default function CheckoutPage() {
           </div>
         ))}
 
-        {methods.length > 1 && (
+        {!whatsappOnly && methods.length > 1 && (
           <div className="mt-4 pt-4 border-t border-line">
             <label className="block text-xs uppercase tracking-[0.12em] text-muted mb-2.5">Payment method</label>
             <div className="flex flex-col gap-2">

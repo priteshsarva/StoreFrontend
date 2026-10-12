@@ -12,6 +12,7 @@ import AtelierHome from "./AtelierHome";
 import RedlineHome from "./RedlineHome";
 import HavenHome from "./HavenHome";
 import CarryHome from "./CarryHome";
+import DripHome from "./DripHome";
 
 export default function StoreHome() {
   const { config } = useStore();
@@ -29,6 +30,7 @@ export default function StoreHome() {
   if (preset === "redline") return <RedlineHome />;
   if (preset === "haven") return <HavenHome />;
   if (preset === "carry") return <CarryHome />;
+  if (preset === "drip") return <DripHome />;
   if (preset === "original") return <OriginalHome />;
 
   // vendor explicitly configured a custom section layout → render that

@@ -1,14 +1,21 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Heart } from "lucide-react";
 import { useWishlist } from "../../context/WishlistContext";
 import { useStore } from "../../context/StoreContext";
 import { inr } from "../../lib/money";
 import { withStore } from "../../lib/tenant";
+import { observeImpression } from "../../lib/track";
 
 export default function ProductCard({ product }) {
   const wl = useWishlist();
   const { config } = useStore();
+  // Count this product as "shown" (an impression) once it scrolls into view.
+  const cardRef = useRef(null);
+  useEffect(
+    () => observeImpression(cardRef.current, { product_id: product.productId, db_name: product.dbName, name: product.productName }),
+    [product.productId, product.dbName] // eslint-disable-line react-hooks/exhaustive-deps
+  );
   const wishlisted = wl?.has(product.dbName, product.productId);
   const isShoe = product.dbName === "shoes";
   const sizes = Array.isArray(product.sizes) ? product.sizes : [];
@@ -32,7 +39,7 @@ export default function ProductCard({ product }) {
   }
 
   return (
-    <Link to={withStore(`/p/${product.dbName}/${product.productId}`)} target="_blank" rel="noopener noreferrer" className="group block">
+    <Link ref={cardRef} to={withStore(`/p/${product.dbName}/${product.productId}`)} target="_blank" rel="noopener noreferrer" className="group block" data-track={`product:${product.productName || product.productId}`}>
       <div className="relative overflow-hidden bg-panel" style={{ aspectRatio: "1/1" }}>
         {product.thumbnail
           ? <img src={product.thumbnail} alt={product.productName} loading="lazy" className={`w-full h-full object-cover transition duration-700 ease-out group-hover:scale-[1.06] ${!product.inStock ? "opacity-70" : ""}`} />

@@ -30,6 +30,7 @@ import WishlistPage from './pages/store/WishlistPage.jsx';
 import StoreNotFound from './pages/store/StoreNotFound.jsx';
 
 import ScrollToTop from './components/ScrollToTop.jsx';
+import RouteTracker from './components/RouteTracker.jsx';
 import { useScrollReveal } from './hooks/useScrollReveal.js';
 
 async function loadPreline() {
@@ -134,6 +135,7 @@ function AppShell() {
       <WishlistProvider>
         <CustomerAuthProvider>
           <ScrollToTop />
+          <RouteTracker />
           {/* content sits ON TOP of the fixed footer; its solid background hides
               the footer until the page is scrolled to the very bottom */}
           <div style={{ position: 'relative', zIndex: 1, background: 'var(--color-paper, #ffffff)', marginBottom: footerH }}>

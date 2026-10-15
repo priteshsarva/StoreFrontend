@@ -68,7 +68,10 @@ export function StoreProvider({ children }) {
   function loadConfig() {
     if (!slug) { setStatus("not-found"); return; }
     api.config()
-      .then((c) => { setConfig(c); setStatus("ready"); if (c.live) api.track("page_view"); })
+      // Count the visit on live AND demo/preview stores. On a gated store the
+      // first call 401s (no token yet); loadConfig re-runs after unlock and the
+      // page_view then records — so demo-site traffic shows in admin analytics.
+      .then((c) => { setConfig(c); setStatus("ready"); api.track("page_view"); })
       .catch((e) => setStatus(e.status === 404 ? "not-found" : "error"));
   }
   useEffect(loadConfig, [slug]); // eslint-disable-line react-hooks/exhaustive-deps

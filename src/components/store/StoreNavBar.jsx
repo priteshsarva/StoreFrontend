@@ -226,7 +226,12 @@ export default function StoreNavBar() {
 
   function submitSearch(e) {
     e?.preventDefault?.();
-    if (q.trim()) { navigate(`/search?q=${encodeURIComponent(q.trim())}`); closeSearch(); }
+    const term = q.trim();
+    if (term) {
+      api.track("search", { meta: { q: term.slice(0, 120) } }); // behaviour: what shoppers look for
+      navigate(`/search?q=${encodeURIComponent(term)}`);
+      closeSearch();
+    }
   }
   function closeSearch() { setSearchOpen(false); setQ(""); setResults(null); }
   function doLogout() { auth?.logout(); setAcctOpen(false); setMenuOpen(false); navigate("/"); }
